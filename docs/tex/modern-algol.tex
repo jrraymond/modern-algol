@@ -1,0 +1,51 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\newcommand{\T}[1]{\texttt{#1}}
+
+
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\setlength{\abovedisplayshortskip}{0pt}
+\setlength{\belowdisplayshortskip}{0pt}
+
+
+
+\title{Modernized Algol\footnotemark}
+\date{}
+
+\begin{document}
+\maketitle
+
+\subsection*{\T{Types}}
+\begin{align*}
+  \tau ::=\quad &\T{nat}           &\text{numbers}\\
+                &\tau \to \tau     &\text{functions} \\
+                &\T{cmd}           &\text{command}
+\end{align*}
+
+\subsection*{\T{Expressions}}
+\begin{align*}
+  e ::=\quad    &x                    &\text{variables} \\
+                &z                    &\text{zero}\\
+                &s(e)                 &\text{successor}\\
+                &\T{rec}\ e\ \{z .e_0\ |\ s(x) \T{ with } y.e_1\} &\text{recursion}\\
+                &\lambda x : \tau.\ e       &\text{abstraction} \\
+                &e_0\ (e_1)             &\text{application} \\
+                &\T{cmd}\ m             &\text{encapsulation}
+\end{align*}
+
+\subsection*{\T{Commands}}
+\begin{align*}
+  m ::=\quad    &\T{ret}\ e                 &\text{return} \\
+                &\T{bnd}\ x\ \T{<-}\ e; m   &\text{sequence} \\
+                &\T{dcl}\ a := e \T{ in } m &\text{new assignable} \\
+                &@a                         &\text{fetch} \\
+                &a := e                     &\text{assign} 
+\end{align*}
+
+
+\footnotetext{As presented in \textit{Practical Foundations for Programming Languages} by Robert Harper.}
+
+\end{document}
