@@ -49,6 +49,13 @@ void da_pop(struct DynArray *arr);
 void da_get(struct DynArray *arr, int index, void *elem);
 
 /* arr : ptr to dynamic array struct
+ * index : index of element to get
+ * elem** : ptr to ptr to element
+ * sets elem* to point to the element at index in arr
+ */
+void da_get_ref(struct DynArray *arr, int index, void **elem);
+
+/* arr : ptr to dynamic array struct
  * index : index of element to set
  * elem* : ptr to element to _copy_ from
  */

@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
     struct DynArray tkns;
     da_DynArray_init(&tkns, line_sz/8, sizeof(struct maToken));
     lex(line, &tkns);
+    print_tokens(&tkns);
     da_DynArray_del(&tkns);
   };
 

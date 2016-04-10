@@ -3,12 +3,11 @@
 
 #include "dynamic_array.h"
 
-enum ma_token {
+enum maTokenE {
   MA_TKN_NAT_TYPE,
   MA_TKN_ARROW_TYPE,
   MA_TKN_CMD_TYPE,
   MA_TKN_VAR,
-  MA_TKN_NAT,
   MA_TKN_LBRACKET,
   MA_TKN_RBRACKET,
   MA_TKN_LPAREN,
@@ -24,7 +23,7 @@ enum ma_token {
   MA_TKN_SYMBOL,
 };
 
-enum ma_symbol {
+enum maSymbolE {
   MA_SYM_REC,
   MA_SYM_CMD,
   MA_SYM_RET,
@@ -33,10 +32,11 @@ enum ma_symbol {
   MA_SYM_DCL,
   MA_SYM_SUCC,
   MA_SYM_AT,
+  MA_SYM_ZERO,
 };
 
 struct maToken {
-  enum ma_symbol tag;
+  enum maTokenE tag;
   union {
     unsigned int symbol_id;
     char* contents;
@@ -44,5 +44,8 @@ struct maToken {
 };
 
 void lex(char* inp, struct DynArray *tkns);
+
+void print_token(struct maToken t);
+void print_tokens(struct DynArray* tkns);
 
 #endif
