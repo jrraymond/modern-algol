@@ -1,104 +1,104 @@
 #ifndef __MODERN_ALGOL_TYPES_H
 #define __MODERN_ALGOL_TYPES_H
 
-enum MA_Type {
-  MA_NAT_T,
-  MA_ARROW_T,
-  MA_CMD_T
+enum ma_type {
+  MA_TYPE_NAT,
+  MA_TYPE_ARROW,
+  MA_TYPE_CMD
 };
 
-enum MA_Expression {
-  MA_VAR,
-  MA_ZERO,
-  MA_SUCC,
-  MA_REC,
-  MA_ABS,
-  MA_APP,
-  MA_CMD,
+enum ma_exp {
+  MA_EXP_VAR,
+  MA_EXP_ZERO,
+  MA_EXP_SUCC,
+  MA_EXP_REC,
+  MA_EXP_ABS,
+  MA_EXP_APP,
+  MA_EXP_CMD,
 };
 
-enum MA_Command {
-  MA_RET,
-  MA_BIND,
-  MA_DCL,
-  MA_FETCH,
-  MA_ASSIGN,
+enum ma_cmd {
+  MA_CMD_RET,
+  MA_CMD_BIND,
+  MA_CMD_DCL,
+  MA_CMD_FETCH,
+  MA_CMD_ASSIGN,
 };
 
-struct ma_exp; //forward declare so we can have mutually recursive structs
-struct ma_cmd;
+struct maExp; //forward declare so we can have mutually recursive structs
+struct maCmd;
 
 //not using typedefs because it pollutes the global namespace
 // and linus thinks its a terrible idea
 //
-// The other choice was to declare these structs outside the unions
+// the other choice was to declare these structs outside the unions
 
 //application
-struct ma_app {
-  struct ma_exp* fun;
-  struct ma_exp* arg;
+struct maApp {
+  struct maExp* fun;
+  struct maExp* arg;
 };
 
 //rec construct
-struct ma_rec {
-  struct ma_exp* e;
-  struct ma_exp* zcase;
+struct maRec {
+  struct maExp* e;
+  struct maExp* zcase;
   unsigned int x;
   unsigned int y;
-  struct ma_exp* scase;
+  struct maExp* scase;
 };
 
 //abstraction
-struct ma_abs {
+struct maAbs {
   unsigned int var;
-  enum MA_Type type;
+  enum ma_type type;
 };
 
 // for recursive structs, we need to use pointers, otherwise the
-// compiler would not be able to tell how big the structs are. So since the
+// compiler would not be able to tell how big the structs are. so since the
 // types for expressions or commands are mutually recursive, at they cannot
 // contain each other, so at least one must contain a pointer to the other.
-// The question is where do the pointers go. Should we have a struct always be
-// a pointer to another struct, or should it only be one way. If so, which
+// the question is where do the pointers go. should we have a struct always be
+// a pointer to another struct, or should it only be one way. if so, which
 // struct should contain the pointer?
 
-struct ma_exp {
-  enum MA_Expression tag;
+struct maExp {
+  enum ma_exp tag;
   union {
     unsigned int var; //debruijn indexes
-    struct ma_exp* e0; //successor, need a better name for this
-    struct ma_rec rec; //three children rec
-    struct ma_abs abs; //abstraction
-    struct ma_app app; //application
-    struct ma_cmd* cmd; //command
-  };
+    struct maExp* e0; //successor, need a better name for this
+    struct maRec rec; //three children rec
+    struct maAbs abs; //abstraction
+    struct maApp app; //application
+    struct maCmd* cmd; //command
+  } val;
 };
 
-struct ma_bind {
+struct maBind {
   unsigned int var;
-  struct ma_exp exp;
-  struct ma_cmd* cmd;
+  struct maExp exp;
+  struct maCmd* cmd;
 };
 
-struct ma_dcl {
+struct maDcl {
   unsigned int ass; 
-  struct ma_exp exp;
-  struct ma_cmd* cmd;
+  struct maExp exp;
+  struct maCmd* cmd;
 };
 
-struct ma_assign {
+struct maAssign {
   unsigned int ass;
-  struct ma_exp exp;
+  struct maExp exp;
 };
 
-struct ma_cmd {
-  enum MA_Command tag;
-  union {
-    struct ma_exp ret; //return
-    struct ma_bind bnd; //sequence
-    struct ma_dcl dcl; //new assignable
+struct maCmd {
+  enum ma_cmd tag;
+  union val {
+    struct maExp ret; //return
+    struct maBind bnd; //sequence
+    struct maDcl dcl; //new assignable
     unsigned int at; //fetch
-    struct ma_assign assign; //assign
-  };
+    struct maAssign assign; //assign
+  } val;
 };
 #endif
