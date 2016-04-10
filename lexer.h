@@ -1,6 +1,8 @@
 #ifndef __MODERN_ALGOL_LEXER_H
 #define __MODERN_ALGOL_LEXER_H
 
+#include "dynamic_array.h"
+
 enum ma_token {
   MA_TKN_NAT_TYPE,
   MA_TKN_ARROW_TYPE,
@@ -40,4 +42,7 @@ struct maToken {
     char* contents;
   } val;
 };
+
+void lex(char* inp, struct DynArray *tkns);
+
 #endif

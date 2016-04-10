@@ -1,5 +1,19 @@
 #include "dynamic_array.h"
 
+
+/*  DA_GROWTH_FACTOR determines how much big the resized
+ *  array should be relative to the old array.
+ *
+ * DA_SHRINK_THRESHOLD determines at what ratio size : capacity should the
+ * array be shrunk.
+ *
+ * DA_SHRINK_FACTOR determines how much the array should be shrunk by.
+ */
+double DA_GROWTH_FACTOR = 1.5;
+double DA_SHRINK_THRESHOLD = 0.3;
+double DA_SHRINK_FACTOR = 0.75;
+
+
 void da_DynArray_init(struct DynArray *arr, size_t sz, size_t elem_sz) {
   arr->size = 0;
   arr->capacity = sz;
