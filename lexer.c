@@ -1,5 +1,15 @@
 #include "lexer.h"
 
+void ma_tkn_del(struct maToken* tkn) {
+  switch (tkn->tag) {
+    case MA_TKN_VAR:
+      free(tkn->val.contents);
+      break;
+    default:
+      (void) 0;
+  }
+}
+
 void add_var_tkn(char* buffer, size_t b_sz, struct DynArray* tkns) {
   struct maToken t;
   t.tag = MA_TKN_VAR;
@@ -13,7 +23,7 @@ bool is_variable_char(char c) {
   return isalpha(c) || isdigit(c) || c == '_';
 }
 
-void lex(char* inp, struct DynArray* tkns) {
+void ma_lex(char* inp, struct DynArray* tkns) {
   char with[] = "with";
   char buffer[1024];
   int buffer_ix = 0;
@@ -66,12 +76,11 @@ void lex(char* inp, struct DynArray* tkns) {
       case ':':
         if (inp[i+1] == '=') {
           t.tag = MA_TKN_ASSIGN;
-          da_append(tkns, &t);
           ++i;
         } else {
           t.tag = MA_TKN_COLON;
-          da_append(tkns, &t);
         }
+        da_append(tkns, &t);
         break;
       case ';':
         t.tag = MA_TKN_SEMICOLON;
@@ -82,8 +91,8 @@ void lex(char* inp, struct DynArray* tkns) {
           t.tag = MA_TKN_LEFTARROW;
           da_append(tkns, &t);
           ++i;
+          break;
         }
-        break;
 default_label:
       default:
         if (!isspace(inp[i])) {
@@ -99,7 +108,7 @@ default_label:
   printf("%zu, %zu\n", strlen(inp), tkns->size);
 }
 
-void print_token(struct maToken t) {
+void ma_print_token(struct maToken t) {
   switch (t.tag) {
     case MA_TKN_NAT_TYPE:
       printf("nat");
@@ -158,11 +167,11 @@ void print_token(struct maToken t) {
   }
 }
 
-void print_tokens(struct DynArray* tkns) {
+void ma_print_tokens(struct DynArray* tkns) {
   struct maToken *t;
   for (int i=0; i<tkns->size; ++i) {
     da_get_ref(tkns, i, (void**) &t);
-    print_token(*t);
+    ma_print_token(*t);
     printf(",");
   }
   printf("\n");

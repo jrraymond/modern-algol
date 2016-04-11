@@ -47,9 +47,10 @@ struct maToken {
   } val;
 };
 
-void lex(char* inp, struct DynArray *tkns);
+void ma_lex(char* inp, struct DynArray *tkns);
 
-void print_token(struct maToken t);
-void print_tokens(struct DynArray* tkns);
+void ma_print_token(struct maToken t);
+void ma_print_tokens(struct DynArray* tkns);
+void ma_tkn_del(struct maToken* tkn);
 
 #endif

@@ -9,15 +9,17 @@
 #include "lexer.h"
 
 
+
 void test_lexer() {
   char* line = NULL;
   size_t line_sz;
   while (getline(&line, &line_sz, stdin) > 0) {
     struct DynArray tkns;
     da_DynArray_init(&tkns, line_sz/8, sizeof(struct maToken));
-    lex(line, &tkns);
-    print_tokens(&tkns);
-    da_DynArray_del(&tkns); //memory leek because I don't free elements
+    ma_lex(line, &tkns);
+    ma_print_tokens(&tkns);
+    da_map(&tkns,(void(*)(void*))&ma_tkn_del);
+    da_DynArray_del(&tkns);
   };
 
 }

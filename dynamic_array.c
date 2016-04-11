@@ -63,3 +63,9 @@ void da_get_ref(struct DynArray *arr, int index, void **elem) {
 void da_set(struct DynArray *arr, int index, void *elem) {
   memcpy(arr->elems + index*arr->elem_size, elem, arr->elem_size);
 }
+
+void da_map(struct DynArray *arr, void (*fn)(void*)) {
+  for (int i=0; i<arr->size; ++i) {
+    (*fn)((void*) (arr->elems + i*arr->elem_size));
+  }
+}

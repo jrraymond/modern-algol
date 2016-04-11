@@ -1,5 +1,5 @@
-#ifndef __MA_DYNAMIC_ARRAY_H
-#define __MA_DYNAMIC_ARRAY_H
+#ifndef __DYNAMIC_ARRAY_H
+#define __DYNAMIC_ARRAY_H
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -60,4 +60,11 @@ void da_get_ref(struct DynArray *arr, int index, void **elem);
  * elem* : ptr to element to _copy_ from
  */
 void da_set(struct DynArray *arr, int index, void *elem);
+
+/* map a function over an array
+ * arr : dynamic array to map over
+ * fn : function pointer to function that takes void* to element
+ */
+void da_map(struct DynArray *arr, void (*fn)(void*));
+
 #endif
