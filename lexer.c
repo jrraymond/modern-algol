@@ -1,78 +1,102 @@
 #include "lexer.h"
 
-enum maTokenE ma_tokens[17] = 
-  { MA_TKN_NAT_TYPE,
-    MA_TKN_ARROW_TYPE,
-    MA_TKN_CMD_TYPE,
-    MA_TKN_VAR,
-    MA_TKN_LBRACKET,
-    MA_TKN_RBRACKET,
-    MA_TKN_LPAREN,
-    MA_TKN_RPAREN,
-    MA_TKN_LAMBDA,
-    MA_TKN_VBAR,
-    MA_TKN_DOT,
-    MA_TKN_WITH,
-    MA_TKN_COLON,
-    MA_TKN_SEMICOLON,
-    MA_TKN_LEFTARROW,
-    MA_TKN_ASSIGN,
-    MA_TKN_SYMBOL};
+void add_var_tkn(char* buffer, size_t b_sz, struct DynArray* tkns) {
+  struct maToken t;
+  t.tag = MA_TKN_VAR;
+  t.val.contents = malloc(sizeof(char)*(b_sz+1));
+  memcpy(t.val.contents, buffer, b_sz);
+  t.val.contents[b_sz] = '\0';
+  da_append(tkns, &t);
+}
+
+bool is_variable_char(char c) {
+  return isalpha(c) || isdigit(c) || c == '_';
+}
 
 void lex(char* inp, struct DynArray* tkns) {
+  char with[] = "with";
+  char buffer[1024];
+  int buffer_ix = 0;
   int tkn_ix = tkns->size;
   int i = 0;
+  struct maToken t;
   while (inp[i]) {
+    if (buffer_ix > 0 && (isspace(inp[i]) || !is_variable_char(inp[i]))) {
+      add_var_tkn(buffer, buffer_ix, tkns);
+      buffer_ix = 0;
+    } 
     switch (inp[i]) {
       case '{':
-        da_append(tkns, &ma_tokens[MA_TKN_LBRACKET]);
+        t.tag = MA_TKN_LBRACKET;
+        da_append(tkns, &t);
         break;
       case '}':
-        da_append(tkns, &ma_tokens[MA_TKN_RBRACKET]);
+        t.tag = MA_TKN_RBRACKET;
+        da_append(tkns, &t);
         break;
       case '(':
-        da_append(tkns, &ma_tokens[MA_TKN_LPAREN]);
+        t.tag = MA_TKN_LPAREN;
+        da_append(tkns, &t);
         break;
       case ')':
-        da_append(tkns, &ma_tokens[MA_TKN_RPAREN]);
+        t.tag = MA_TKN_RPAREN;
+        da_append(tkns, &t);
         break;
       case '\\':
-        da_append(tkns, &ma_tokens[MA_TKN_LAMBDA]);
+        t.tag = MA_TKN_LAMBDA;
+        da_append(tkns, &t);
         break;
       case '|':
-        da_append(tkns, &ma_tokens[MA_TKN_VBAR]);
+        t.tag = MA_TKN_VBAR;
+        da_append(tkns, &t);
         break;
-      case  '.':
-        da_append(tkns, &ma_tokens[MA_TKN_DOT]);
+      case '.':
+        t.tag = MA_TKN_DOT;
+        da_append(tkns, &t);
         break;
-      case  'w':
-        i+1; //noop, wont compile without
-        char with[] = "with";
-        if (strncmp(inp+i, with, 4)) {
-          da_append(tkns, &ma_tokens[MA_TKN_DOT]);
+      case 'w':
+        if (strncmp(inp+i, with, 4) == 0) {
+          t.tag = MA_TKN_WITH;
+          da_append(tkns, &t);
           i += 3;
+          break;
+        } else {
+          goto default_label;
         }
-        break;
       case ':':
         if (inp[i+1] == '=') {
-          da_append(tkns, &ma_tokens[MA_TKN_ASSIGN]);
+          t.tag = MA_TKN_ASSIGN;
+          da_append(tkns, &t);
           ++i;
         } else {
-          da_append(tkns, &ma_tokens[MA_TKN_COLON]);
+          t.tag = MA_TKN_COLON;
+          da_append(tkns, &t);
         }
         break;
       case ';':
-        da_append(tkns, &ma_tokens[MA_TKN_SEMICOLON]);
+        t.tag = MA_TKN_SEMICOLON;
+        da_append(tkns, &t);
         break;
       case '<':
         if (inp[i+1] == '-') {
-          da_append(tkns, &ma_tokens[MA_TKN_LEFTARROW]);
+          t.tag = MA_TKN_LEFTARROW;
+          da_append(tkns, &t);
           ++i;
         }
         break;
+default_label:
+      default:
+        if (!isspace(inp[i])) {
+          buffer[buffer_ix] = inp[i];
+          ++buffer_ix;
+        }
     }
     ++i;
   }
+  if (buffer_ix > 0) {
+    add_var_tkn(buffer, buffer_ix, tkns);
+  }
+  printf("%zu, %zu\n", strlen(inp), tkns->size);
 }
 
 void print_token(struct maToken t) {
@@ -85,6 +109,9 @@ void print_token(struct maToken t) {
       break;
     case MA_TKN_CMD_TYPE:
       printf("cmd");
+      break;
+    case MA_TKN_NAT:
+      printf("%u", t.val.nat);
       break;
     case MA_TKN_VAR:
       printf("%s", t.val.contents);

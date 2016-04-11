@@ -9,20 +9,21 @@
 #include "lexer.h"
 
 
-int main(int argc, char** argv) {
-  printf("Modern Algol\n");
-
+void test_lexer() {
   char* line = NULL;
   size_t line_sz;
   while (getline(&line, &line_sz, stdin) > 0) {
-    printf("%s", line);
-
     struct DynArray tkns;
     da_DynArray_init(&tkns, line_sz/8, sizeof(struct maToken));
     lex(line, &tkns);
     print_tokens(&tkns);
-    da_DynArray_del(&tkns);
+    da_DynArray_del(&tkns); //memory leek because I don't free elements
   };
 
+}
+
+int main(int argc, char** argv) {
+  printf("Modern Algol\n");
+  test_lexer();
   return 0;
 }

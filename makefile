@@ -7,7 +7,7 @@ OBJS=lexer.o dynamic_array.o
 .c.o: 
 	$(CC) -c $(CFLAGS) $<
 
-malgol: $(OBJS)
+malgol: malgol.c $(OBJS)
 	$(CC) $(CFLAGS) -o malgol malgol.c $(OBJS)
 
 

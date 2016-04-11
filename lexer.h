@@ -1,12 +1,15 @@
 #ifndef __MODERN_ALGOL_LEXER_H
 #define __MODERN_ALGOL_LEXER_H
 
+#include <stdbool.h>
+#include <ctype.h>
 #include "dynamic_array.h"
 
 enum maTokenE {
   MA_TKN_NAT_TYPE,
   MA_TKN_ARROW_TYPE,
   MA_TKN_CMD_TYPE,
+  MA_TKN_NAT,
   MA_TKN_VAR,
   MA_TKN_LBRACKET,
   MA_TKN_RBRACKET,
@@ -39,6 +42,7 @@ struct maToken {
   enum maTokenE tag;
   union {
     unsigned int symbol_id;
+    unsigned int nat;
     char* contents;
   } val;
 };
