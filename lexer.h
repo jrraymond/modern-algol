@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include "dynamic_array.h"
+#include "hashtable.h"
+#include "debug.h"
 
 enum maTokenE {
   MA_TKN_NAT_TYPE,
@@ -18,7 +20,6 @@ enum maTokenE {
   MA_TKN_LAMBDA,
   MA_TKN_VBAR,
   MA_TKN_DOT,
-  MA_TKN_WITH,
   MA_TKN_COLON,
   MA_TKN_SEMICOLON,
   MA_TKN_LEFTARROW,
@@ -47,10 +48,17 @@ struct maToken {
   } val;
 };
 
-void ma_lex(char* inp, struct DynArray *tkns);
+void ma_lex(char* inp, struct DynArray *tkns, struct hashtable *symbol_table);
 
 void ma_print_token(struct maToken t);
 void ma_print_tokens(struct DynArray* tkns);
 void ma_tkn_del(struct maToken* tkn);
+
+void symbol_table_init(struct hashtable *table);
+void symbol_table_del(struct hashtable *table);
+
+static const size_t ma_tkn_num_symbols = 9;
+static const char ma_tkn_symbols[ma_tkn_num_symbols][5] =
+  { "nat", "cmd", "S", "Z", "rec", "with", "ret", "bnd", "dcl" };
 
 #endif

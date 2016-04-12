@@ -1,7 +1,4 @@
 #include "hashtable.h"
-#include <math.h>
-#include <string.h>
-#include <stdio.h>
 
 /* A bucket can be in one of three states: empty, dummy, active.
  *  empty: no value in the bucket
@@ -18,8 +15,16 @@ void ht_setstatus(int *flags, int i, int st) {
   flags[2*i/sizeof(int)] = (flags[2*i/sizeof(int)] & ~mask) | (st & mask);
 }
 
-void ht_init(struct hashtable *htable, int (*hash_fn)(void*), size_t key_sz, size_t value_sz, int capacity) {
+void ht_init(
+  struct hashtable *htable,
+  unsigned int (*hash_fn)(void*),
+  bool (*cmp_fn)(void*, void*),
+  size_t key_sz,
+  size_t value_sz,
+  int capacity
+  ) {
   htable->hash_fn = hash_fn;
+  htable->cmp = cmp_fn;
   htable->capacity = capacity;
   htable->size = 0;
   htable->key_sz = key_sz;
@@ -36,15 +41,16 @@ void ht_del(struct hashtable *htable) {
   free(htable->values);
 }
 
-
-bool ht_lookup(struct hashtable *htable, void *key, void* *value) {
-  int k, ix, found;
+bool ht_get_ref(struct hashtable *htable, void *key, void **value) {
+  unsigned int k, ix, found;
   k = htable->hash_fn(key);
+  debug_print("get_ref: %s@%p, %u\n", *(char**)key, *(char**)key, k);
   found = false;
   for (int i=0; i<htable->capacity && !found; ++i) {
     ix = (k + i*i)%htable->capacity;
     int status = ht_status(htable->flags, ix);
-    if (status == ht_active && !memcmp(htable->keys+ix*htable->key_sz, key, htable->key_sz)) {
+    if (status == ht_active &&
+        htable->cmp(htable->keys+ix*htable->key_sz, key)) {
       found = true;
     } else if (status == ht_empty) {
       return false;
@@ -77,13 +83,16 @@ void ht_rehash(struct hashtable *ht, int sz) {
 }
 
 void ht_insert(struct hashtable *htable, void *key, void *value) {
-  int k, ix;
+  unsigned int k, ix;
   k = htable->hash_fn(key);
   for (int i=0; i<htable->capacity; ++i) {
     ix = (k + i*i)%htable->capacity;
     if (ht_status(htable->flags, ix) != ht_active)
       break;
   }
+  
+  debug_print("ht_insert: %s@%p : %u -> %u\n", *(char**) key, *(char**)key, (unsigned int) k, *(unsigned int*)value);
+
   ht_setstatus(htable->flags, ix, ht_active);
   memcpy(htable->keys+ix*htable->key_sz, key, htable->key_sz);
   memcpy(htable->values+ix*htable->value_sz, value, htable->value_sz);
@@ -100,7 +109,7 @@ void ht_rm(struct hashtable *htable, void *key) {
   for (int i=0; i<htable->capacity && !found; ++i) {
     ix = (k + i*i)%htable->capacity;
     if (ht_status(htable->flags, ix) == ht_active &&
-       !memcmp(htable->keys+ix*htable->key_sz, key, htable->key_sz)) {
+       htable->cmp(htable->keys+ix*htable->key_sz, key)) {
       ht_setstatus(htable->flags, ix, ht_dummy);
       found = true;
       --htable->size;
@@ -117,7 +126,7 @@ void ht_set(struct hashtable *htable, void *key, void *value) {
   for (int i=0; i<htable->capacity && !found; ++i) {
     ix = (k + i*i)%htable->capacity;
     if (ht_status(htable->flags, ix) == ht_active &&
-       !memcmp(htable->keys+ix*htable->key_sz, key, htable->key_sz))
+       htable->cmp(htable->keys+ix*htable->key_sz, key))
       found = 1;
   }
   if (!found)
@@ -128,4 +137,24 @@ void ht_set(struct hashtable *htable, void *key, void *value) {
 void ht_iters(struct hashtable *htable, void* *begin, void* *end) {
   printf("UNIMPLEMENTED\n");
   exit(0);
+}
+
+/* COMMON HASH FUNCTIONS */
+unsigned int ptr64(void* s) {
+  exit(1);
+}
+unsigned int ptr32(void* s) {
+  exit(1);
+}
+
+/* djb2 by Dan Bernstein */
+unsigned int str_hash(void** s_ptr) {
+  char* s = *(char**) s_ptr;
+  unsigned long hash = 5381;
+  int c;
+
+  while ((c = *s++))
+      hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+  return hash;
 }

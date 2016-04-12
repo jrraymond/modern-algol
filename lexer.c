@@ -10,29 +10,73 @@ void ma_tkn_del(struct maToken* tkn) {
   }
 }
 
-void add_var_tkn(char* buffer, size_t b_sz, struct DynArray* tkns) {
-  struct maToken t;
-  t.tag = MA_TKN_VAR;
-  t.val.contents = malloc(sizeof(char)*(b_sz+1));
-  memcpy(t.val.contents, buffer, b_sz);
-  t.val.contents[b_sz] = '\0';
-  da_append(tkns, &t);
+bool is_num(char* buffer, size_t sz) {
+  for (int i=0; i<sz; ++i) {
+    if (!isdigit(buffer[i])) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool is_variable_char(char c) {
   return isalpha(c) || isdigit(c) || c == '_';
 }
 
-void ma_lex(char* inp, struct DynArray* tkns) {
-  char with[] = "with";
+bool string_cmp(void* p0, void* p1) {
+  char* s0 = *(char**) p0;
+  char* s1 = *(char**) p1;
+  return strcmp(s0, s1) == 0;
+}
+
+void symbol_table_init(struct hashtable *table) {
+  ht_init(table, (unsigned int (*)(void*)) &str_hash, &string_cmp, sizeof(char*), sizeof(unsigned int), 2*ma_tkn_num_symbols);
+  unsigned int uid = 0;
+  for (int i=0; i<ma_tkn_num_symbols; ++i) {
+    char* key = malloc(sizeof(char)*(strlen(ma_tkn_symbols[i]) + 1));
+    strcpy(key, ma_tkn_symbols[i]);
+    ht_insert(table, &key, &uid);
+    ++uid;
+  }
+}
+
+void symbol_table_del(struct hashtable* table) {
+  for (int i=0; i<table->size; ++i) {
+    free(table->keys + i*table->key_sz);
+  }
+  ht_del(table);
+}
+
+void add_tkn(char* buffer, size_t b_sz, struct DynArray *tkns, struct hashtable *symbol_table) {
+  struct maToken t;
+  unsigned int *symbol_id;
+  buffer[b_sz] = '\0';
+  bool result = ht_get_ref(symbol_table, (void**) &buffer, (void**) &symbol_id);
+
+  debug_print("add_tkn: %s,%i\n", buffer, result);
+
+  if (result) {
+    t.tag = MA_TKN_SYMBOL;
+    t.val.symbol_id = *symbol_id;
+  } else if (is_num(buffer, b_sz)) {
+    t.tag = MA_TKN_NAT;
+    t.val.nat = strtoul(buffer, NULL, 10);
+  } else {
+    t.tag = MA_TKN_VAR;
+    t.val.contents = malloc(sizeof(char)*(b_sz+1));
+    strcpy(t.val.contents, buffer);
+  }
+  da_append(tkns, &t);
+}
+
+void ma_lex(char* inp, struct DynArray* tkns, struct hashtable *symbol_table) {
   char buffer[1024];
   int buffer_ix = 0;
-  int tkn_ix = tkns->size;
   int i = 0;
   struct maToken t;
   while (inp[i]) {
     if (buffer_ix > 0 && (isspace(inp[i]) || !is_variable_char(inp[i]))) {
-      add_var_tkn(buffer, buffer_ix, tkns);
+      add_tkn(buffer, buffer_ix, tkns, symbol_table);
       buffer_ix = 0;
     } 
     switch (inp[i]) {
@@ -64,15 +108,6 @@ void ma_lex(char* inp, struct DynArray* tkns) {
         t.tag = MA_TKN_DOT;
         da_append(tkns, &t);
         break;
-      case 'w':
-        if (strncmp(inp+i, with, 4) == 0) {
-          t.tag = MA_TKN_WITH;
-          da_append(tkns, &t);
-          i += 3;
-          break;
-        } else {
-          goto default_label;
-        }
       case ':':
         if (inp[i+1] == '=') {
           t.tag = MA_TKN_ASSIGN;
@@ -93,7 +128,6 @@ void ma_lex(char* inp, struct DynArray* tkns) {
           ++i;
           break;
         }
-default_label:
       default:
         if (!isspace(inp[i])) {
           buffer[buffer_ix] = inp[i];
@@ -103,9 +137,9 @@ default_label:
     ++i;
   }
   if (buffer_ix > 0) {
-    add_var_tkn(buffer, buffer_ix, tkns);
+    add_tkn(buffer, buffer_ix, tkns, symbol_table);
   }
-  printf("%zu, %zu\n", strlen(inp), tkns->size);
+  debug_print("%zu, %zu\n", strlen(inp), tkns->size);
 }
 
 void ma_print_token(struct maToken t) {
@@ -146,9 +180,6 @@ void ma_print_token(struct maToken t) {
     case MA_TKN_DOT:
       printf(".");
       break;
-    case MA_TKN_WITH:
-      printf("with");
-      break;
     case MA_TKN_COLON:
       printf(":");
       break;
@@ -162,7 +193,7 @@ void ma_print_token(struct maToken t) {
       printf(":=");
       break;
     case MA_TKN_SYMBOL:
-      printf("%u", t.val.symbol_id);
+      printf("SYMBOL#%u", t.val.symbol_id);
       break;
   }
 }
