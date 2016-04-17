@@ -78,7 +78,7 @@ void ma_lex(char* inp, struct DynArray* tkns, struct hashtable *symbol_table) {
     if (buffer_ix > 0 && (isspace(inp[i]) || !is_variable_char(inp[i]))) {
       add_tkn(buffer, buffer_ix, tkns, symbol_table);
       buffer_ix = 0;
-    } 
+    }
     switch (inp[i]) {
       case '{':
         t.tag = MA_TKN_LBRACKET;
@@ -121,6 +121,14 @@ void ma_lex(char* inp, struct DynArray* tkns, struct hashtable *symbol_table) {
         t.tag = MA_TKN_SEMICOLON;
         da_append(tkns, &t);
         break;
+      case '-':
+        if (inp[i+1] == '>') {
+          t.tag = MA_TKN_RIGHTARROW;
+          da_append(tkns, &t);
+          ++i;
+          break;
+        }
+        goto default_label;
       case '<':
         if (inp[i+1] == '-') {
           t.tag = MA_TKN_LEFTARROW;
@@ -128,6 +136,8 @@ void ma_lex(char* inp, struct DynArray* tkns, struct hashtable *symbol_table) {
           ++i;
           break;
         }
+        goto default_label;
+default_label:
       default:
         if (!isspace(inp[i])) {
           buffer[buffer_ix] = inp[i];
@@ -185,6 +195,9 @@ void ma_print_token(struct maToken t) {
       break;
     case MA_TKN_SEMICOLON:
       printf(";");
+      break;
+    case MA_TKN_RIGHTARROW:
+      printf("->");
       break;
     case MA_TKN_LEFTARROW:
       printf("<-");

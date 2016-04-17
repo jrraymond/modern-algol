@@ -30,7 +30,7 @@
   e ::=\quad    &x                    &\text{variables} \\
                 &z                    &\text{zero}\\
                 &s(e)                 &\text{successor}\\
-                &\T{rec}\ e\ \{z .e_0\ |\ s(x) \T{ with } y.e_1\} &\text{recursion}\\
+                &\T{fix}\ x : \tau \T{ is } e &\text{recursion}\\
                 &\lambda x : \tau.\ e       &\text{abstraction} \\
                 &e_0\ (e_1)             &\text{application} \\
                 &\T{cmd}\ m             &\text{encapsulation}
@@ -42,7 +42,7 @@
                 &\T{bnd}\ x\ \T{<-}\ e; m   &\text{sequence} \\
                 &\T{dcl}\ a := e \T{ in } m &\text{new assignable} \\
                 &@a                         &\text{fetch} \\
-                &a := e                     &\text{assign} 
+                &a := e                     &\text{assign}
 \end{align*}
 
 

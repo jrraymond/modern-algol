@@ -22,13 +22,14 @@ enum maTokenE {
   MA_TKN_DOT,
   MA_TKN_COLON,
   MA_TKN_SEMICOLON,
+  MA_TKN_RIGHTARROW,
   MA_TKN_LEFTARROW,
   MA_TKN_ASSIGN,
   MA_TKN_SYMBOL,
 };
 
 enum maSymbolE {
-  MA_SYM_REC,
+  MA_SYM_FIX,
   MA_SYM_CMD,
   MA_SYM_RET,
   MA_SYM_BND,
@@ -59,6 +60,6 @@ void symbol_table_del(struct hashtable *table);
 
 static const size_t ma_tkn_num_symbols = 9;
 static const char ma_tkn_symbols[ma_tkn_num_symbols][5] =
-  { "nat", "cmd", "S", "Z", "rec", "with", "ret", "bnd", "dcl" };
+  { "nat", "cmd", "S", "Z", "fix", "is", "ret", "bnd", "dcl" };
 
 #endif
