@@ -8,12 +8,11 @@
 #include "debug.h"
 
 enum maTokenE {
-  MA_TKN_NAT_TYPE,
+  MA_TKN_NAT_TYPE,    //types
   MA_TKN_ARROW_TYPE,
   MA_TKN_CMD_TYPE,
-  MA_TKN_NAT,
-  MA_TKN_VAR,
-  MA_TKN_LBRACKET,
+  MA_TKN_VAR,         //variables
+  MA_TKN_LBRACKET,    //not stringy tokens
   MA_TKN_RBRACKET,
   MA_TKN_LPAREN,
   MA_TKN_RPAREN,
@@ -25,41 +24,59 @@ enum maTokenE {
   MA_TKN_RIGHTARROW,
   MA_TKN_LEFTARROW,
   MA_TKN_ASSIGN,
-  MA_TKN_SYMBOL,
-};
-
-enum maSymbolE {
-  MA_SYM_FIX,
-  MA_SYM_CMD,
-  MA_SYM_RET,
-  MA_SYM_BND,
-  MA_SYM_IN,
-  MA_SYM_DCL,
-  MA_SYM_SUCC,
-  MA_SYM_AT,
-  MA_SYM_ZERO,
+  MA_TKN_FIX,         //stringy tokens
+  MA_TKN_CMD,
+  MA_TKN_RET,
+  MA_TKN_BND,
+  MA_TKN_IN,
+  MA_TKN_IS
+  MA_TKN_DCL,
+  MA_TKN_AT,
+  MA_TKN_SUCC,
+  MA_TKN_ZERO,
+  MA_TKN_NAT,         //actual nats and their ops
+  MA_TKN_PLUS,
+  MA_TKN_DASH,
+  MA_TKN_ASTERISK,
+  MA_TKN_PERCENT,
+  MA_TKN_FWD_SLASH,
+  MA_TKN_CARROT
 };
 
 struct maToken {
   enum maTokenE tag;
   union {
-    unsigned int symbol_id;
     unsigned int nat;
     char* contents;
   } val;
 };
 
-void ma_lex(char* inp, struct DynArray *tkns, struct hashtable *symbol_table);
+void ma_lex(char* inp, struct DynArray *tkns, struct hashtable *keyword_table);
 
 void ma_print_token(struct maToken t);
 void ma_print_tokens(struct DynArray* tkns);
 void ma_tkn_del(struct maToken* tkn);
 
-void symbol_table_init(struct hashtable *table);
-void symbol_table_del(struct hashtable *table);
+void keyword_table_init(struct hashtable *table);
+void keyword_table_del(struct hashtable *table);
 
-static const size_t ma_tkn_num_symbols = 9;
-static const char ma_tkn_symbols[ma_tkn_num_symbols][5] =
-  { "nat", "cmd", "S", "Z", "fix", "is", "ret", "bnd", "dcl" };
+struct maTknStrPair {
+  maTokenE tkn;
+  char[4] str;
+};
+
+static const size_t ma_tkn_num_keywords = 9;
+static const maTknStrPair ma_tkn_keywords[ma_tkn_num_keywords][4] =
+  { { MA_TKN_NAT_TYPE, "nat\0"},
+    { MA_TKN_CMD_TYPE, "cmd\0"},
+    { MA_TKN_SUCC, "S\0"},
+    { MA_TKN_ZERO, "Z\0"},
+    { MA_TKN_FIX, "fix\0"},
+    { MA_TKN_IS, "is\0"},
+    { MA_TKN_IN, "in\0"},
+    { MA_TKN_RET, "ret\0"},
+    { MA_TKN_BDN, "bnd\0"},
+    { MA_TKN_DCL, "dcl\0"}
+  };
 
 #endif

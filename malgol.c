@@ -11,14 +11,14 @@
 
 
 void test_lexer() {
-  struct hashtable symbol_table;
-  symbol_table_init(&symbol_table);
+  struct hashtable keyword_table;
+  keyword_table_init(&keyword_table);
 
 #if DEBUG
-  for (int i=0; i<ma_tkn_num_symbols; ++i) {
-    char* k = (char*) ma_tkn_symbols[i];
+  for (int i=0; i<ma_tkn_num_keywords; ++i) {
+    char* k = (char*) ma_tkn_keywords[i];
     unsigned int* v;
-    if (ht_get_ref(&symbol_table, (void**) &k, (void**) &v))
+    if (ht_get_ref(&keyword_table, (void**) &k, (void**) &v))
       printf("%i, %s, %u\n", i, k, *v);
   }
 #endif
@@ -28,12 +28,12 @@ void test_lexer() {
   while (getline(&line, &line_sz, stdin) > 0) {
     struct DynArray tkns;
     da_DynArray_init(&tkns, line_sz/8, sizeof(struct maToken));
-    ma_lex(line, &tkns, &symbol_table);
+    ma_lex(line, &tkns, &keyword_table);
     ma_print_tokens(&tkns);
     da_map(&tkns,(void(*)(void*))&ma_tkn_del);
     da_DynArray_del(&tkns);
   };
-  symbol_table_del(&symbol_table);
+  keyword_table_del(&keyword_table);
 }
 
 int main(int argc, char** argv) {

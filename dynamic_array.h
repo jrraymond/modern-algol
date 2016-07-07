@@ -25,6 +25,7 @@ void da_DynArray_init(struct DynArray *arr, size_t sz, size_t elem_sz);
 
 /* arr : ptr to initialized dynamic array struct
  * frees memory held by arr
+ * does not free memory held by elements
  */
 void da_DynArray_del(struct DynArray *arr);
 
