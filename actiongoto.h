@@ -62,5 +62,24 @@ void action_table_del(struct ActionTable *action_table);
 /* Frees memory held by goto table struct */
 void goto_table_del(struct GotoTable *goto_table);
 
+struct TokenPair {
+  unsigned int id;
+  char *str;
+}
+
+struct TokenMap {
+  struct TokenPair *map;
+  size_t sz;
+}
+
+
+struct Production {
+  unsigned int nonterminal;
+  unsigned int *rhs;
+  size_t rhs_sz;
+}
+
+
+void production_del(struct Production *prod);
 
 #endif
