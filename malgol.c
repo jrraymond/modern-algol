@@ -16,8 +16,8 @@ void test_lexer() {
 
 #if DEBUG
   for (int i=0; i<ma_tkn_num_keywords; ++i) {
-    char* k = (char*) ma_tkn_keywords[i];
-    unsigned int* v;
+    char* k = (char*) ma_tkn_keywords[i].str;
+    enum maTokenE *v;
     if (ht_get_ref(&keyword_table, (void**) &k, (void**) &v))
       printf("%i, %s, %u\n", i, k, *v);
   }

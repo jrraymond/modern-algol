@@ -1,7 +1,7 @@
 IDIR=.
 BUILD=build
 CC=clang
-CFLAGS=-I$(IDIR) -Wall -std=c99 -lm -g -DDEBUG=0 -Wno-missing-braces
+CFLAGS=-I$(IDIR) -Wall -std=c99 -lm -g -DDEBUG=1 -Wno-missing-braces
 
 OBJS=lexer.o dynamic_array.o hashtable.o
 .c.o: 

@@ -118,6 +118,7 @@ void ma_lex(char* inp, struct DynArray* tkns, struct hashtable *keyword_table) {
   int i = 0;
   struct maToken t;
   while (inp[i]) {
+    bool append = true;
     if (buffer_ix > 0 && (isspace(inp[i]) || !is_variable_char(inp[i]))) {
       add_tkn(buffer, buffer_ix, tkns, keyword_table);
       buffer_ix = 0;
@@ -125,31 +126,24 @@ void ma_lex(char* inp, struct DynArray* tkns, struct hashtable *keyword_table) {
     switch (inp[i]) {
       case '{':
         t.tag = MA_TKN_LBRACKET;
-        da_append(tkns, &t);
         break;
       case '}':
         t.tag = MA_TKN_RBRACKET;
-        da_append(tkns, &t);
         break;
       case '(':
         t.tag = MA_TKN_LPAREN;
-        da_append(tkns, &t);
         break;
       case ')':
         t.tag = MA_TKN_RPAREN;
-        da_append(tkns, &t);
         break;
       case '\\':
         t.tag = MA_TKN_LAMBDA;
-        da_append(tkns, &t);
         break;
       case '|':
         t.tag = MA_TKN_VBAR;
-        da_append(tkns, &t);
         break;
       case '.':
         t.tag = MA_TKN_DOT;
-        da_append(tkns, &t);
         break;
       case ':':
         if (inp[i+1] == '=') {
@@ -158,35 +152,50 @@ void ma_lex(char* inp, struct DynArray* tkns, struct hashtable *keyword_table) {
         } else {
           t.tag = MA_TKN_COLON;
         }
-        da_append(tkns, &t);
         break;
       case ';':
         t.tag = MA_TKN_SEMICOLON;
-        da_append(tkns, &t);
         break;
       case '-':
         if (inp[i+1] == '>') {
           t.tag = MA_TKN_RIGHTARROW;
-          da_append(tkns, &t);
           ++i;
-          break;
+        } else {
+          t.tag = MA_TKN_DASH;
         }
-        goto default_label;
+        break;
       case '<':
         if (inp[i+1] == '-') {
           t.tag = MA_TKN_LEFTARROW;
-          da_append(tkns, &t);
           ++i;
           break;
         }
-        goto default_label;
-default_label:
+      case '+':
+        t.tag = MA_TKN_PLUS;
+        break;
+      case '*':
+        t.tag = MA_TKN_ASTERISK;
+        break;
+      case '/':
+        t.tag = MA_TKN_FWD_SLASH;
+        break;
+      case '%':
+        t.tag = MA_TKN_PERCENT;
+        break;
+      case '^':
+        t.tag = MA_TKN_CARROT;
+        break;
       default:
         if (!isspace(inp[i])) {
           buffer[buffer_ix] = inp[i];
           ++buffer_ix;
         }
+        append = false;
     }
+    if (append) {
+      da_append(tkns, &t);
+    }
+    append = true;
     ++i;
   }
   if (buffer_ix > 0) {
