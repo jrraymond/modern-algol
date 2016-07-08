@@ -1,5 +1,42 @@
 #include "lexer.h"
 
+#include <assert.h>
+
+struct maTknStrPair ma_tkn_keywords[] =
+  { { MA_TKN_NAT_TYPE, "nat\0"},
+    { MA_TKN_CMD_TYPE, "cmd\0"},
+    { MA_TKN_SUCC, "S\0"},
+    { MA_TKN_ZERO, "Z\0"},
+    { MA_TKN_FIX, "fix\0"},
+    { MA_TKN_IS, "is\0"},
+    { MA_TKN_IN, "in\0"},
+    { MA_TKN_RET, "ret\0"},
+    { MA_TKN_BND, "bnd\0"},
+    { MA_TKN_DCL, "dcl\0"}
+  };
+
+size_t ma_tkn_num_keywords = sizeof(ma_tkn_keywords)/sizeof(struct maTknStrPair);
+
+bool is_tag_keyword(enum maTokenE tag) {
+  for (int i=0; i<ma_tkn_num_keywords; ++i) {
+    if (tag == ma_tkn_keywords[i].tkn)
+      return true;
+  }
+  return false;
+}
+
+/* returns char* to string corresponding to keyword tag.
+ * NULL if tag does not correspond to a stringy keyword.
+ * char* does NOT need to be freed.
+ */
+char* keyword_string(enum maTokenE tag) {
+  for (int i=0; i<ma_tkn_num_keywords; ++i) {
+    if (tag == ma_tkn_keywords[i].tkn)
+      return ma_tkn_keywords[i].str;
+  }
+  return NULL;
+}
+
 void ma_tkn_del(struct maToken* tkn) {
   switch (tkn->tag) {
     case MA_TKN_VAR:
@@ -29,17 +66,23 @@ bool string_cmp(void* p0, void* p1) {
   return strcmp(s0, s1) == 0;
 }
 
+/* initializes the keyword table, which is a map from the keyword to their
+ * corresponding token.
+ * The keyword table owns the strings and is responsible for freeing them.
+ *
+ */
 void keyword_table_init(struct hashtable *table) {
-  ht_init(table, (unsigned int (*)(void*)) &str_hash, &string_cmp, sizeof(char*), sizeof(unsigned int), 2*ma_tkn_num_keywords);
-  unsigned int uid = 0;
+  ht_init(table, (unsigned int (*)(void*)) &str_hash, &string_cmp, sizeof(char*), sizeof(enum maTokenE), 2*ma_tkn_num_keywords);
   for (int i=0; i<ma_tkn_num_keywords; ++i) {
-    char* key = malloc(sizeof(char)*(strlen(ma_tkn_keywords[i]) + 1));
-    strcpy(key, ma_tkn_keywords[i]);
-    ht_insert(table, &key, &uid);
-    ++uid;
+    char* key = malloc(sizeof(char)*(strlen(ma_tkn_keywords[i].str) + 1));
+    strcpy(key, ma_tkn_keywords[i].str);
+    ht_insert(table, &key, (void*) &ma_tkn_keywords[i].tkn);
   }
 }
 
+/* deletes keyword table by freeing strings which are the keys and then calling
+ * hashtable delete.
+ */
 void keyword_table_del(struct hashtable* table) {
   for (int i=0; i<table->size; ++i) {
     free(table->keys + i*table->key_sz);
@@ -47,17 +90,17 @@ void keyword_table_del(struct hashtable* table) {
   ht_del(table);
 }
 
+
 void add_tkn(char* buffer, size_t b_sz, struct DynArray *tkns, struct hashtable *keyword_table) {
   struct maToken t;
-  unsigned int *keyword_id;
+  enum maTokenE  *keyword_tkn;
   buffer[b_sz] = '\0';
-  bool result = ht_get_ref(keyword_table, (void**) &buffer, (void**) &keyword_id);
+  bool result = ht_get_ref(keyword_table, (void**) &buffer, (void**) &keyword_tkn);
 
   debug_print("add_tkn: %s,%i\n", buffer, result);
 
   if (result) {
-    t.tag = MA_TKN_SYMBOL;
-    t.val.keyword_id = *keyword_id;
+    t.tag = *keyword_tkn;
   } else if (is_num(buffer, b_sz)) {
     t.tag = MA_TKN_NAT;
     t.val.nat = strtoul(buffer, NULL, 10);
@@ -163,9 +206,6 @@ void ma_print_token(struct maToken t) {
     case MA_TKN_CMD_TYPE:
       printf("cmd");
       break;
-    case MA_TKN_NAT:
-      printf("%u", t.val.nat);
-      break;
     case MA_TKN_VAR:
       printf("%s", t.val.contents);
       break;
@@ -205,9 +245,30 @@ void ma_print_token(struct maToken t) {
     case MA_TKN_ASSIGN:
       printf(":=");
       break;
-    case MA_TKN_SYMBOL:
-      printf("SYMBOL#%u", t.val.keyword_id);
+    case MA_TKN_NAT:
+      printf("%u", t.val.nat);
       break;
+    case MA_TKN_PLUS:
+      printf("+");
+      break;
+    case MA_TKN_DASH:
+      printf("-");
+      break;
+    case MA_TKN_ASTERISK:
+      printf("*");
+      break;
+    case MA_TKN_PERCENT:
+      printf("%%");
+      break;
+    case MA_TKN_FWD_SLASH:
+      printf("/");
+      break;
+    case MA_TKN_CARROT:
+      printf("^");
+      break;
+    default:
+      assert(is_tag_keyword(t.tag));
+      printf("%s", keyword_string(t.tag));
   }
 }
 

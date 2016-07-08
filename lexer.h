@@ -29,7 +29,7 @@ enum maTokenE {
   MA_TKN_RET,
   MA_TKN_BND,
   MA_TKN_IN,
-  MA_TKN_IS
+  MA_TKN_IS,
   MA_TKN_DCL,
   MA_TKN_AT,
   MA_TKN_SUCC,
@@ -53,6 +53,8 @@ struct maToken {
 
 void ma_lex(char* inp, struct DynArray *tkns, struct hashtable *keyword_table);
 
+bool is_tag_keyword(enum maTokenE tag);
+char* keyword_string(enum maTokenE tag);
 void ma_print_token(struct maToken t);
 void ma_print_tokens(struct DynArray* tkns);
 void ma_tkn_del(struct maToken* tkn);
@@ -61,22 +63,11 @@ void keyword_table_init(struct hashtable *table);
 void keyword_table_del(struct hashtable *table);
 
 struct maTknStrPair {
-  maTokenE tkn;
-  char[4] str;
+  enum maTokenE tkn;
+  char str[4];
 };
 
-static const size_t ma_tkn_num_keywords = 9;
-static const maTknStrPair ma_tkn_keywords[ma_tkn_num_keywords][4] =
-  { { MA_TKN_NAT_TYPE, "nat\0"},
-    { MA_TKN_CMD_TYPE, "cmd\0"},
-    { MA_TKN_SUCC, "S\0"},
-    { MA_TKN_ZERO, "Z\0"},
-    { MA_TKN_FIX, "fix\0"},
-    { MA_TKN_IS, "is\0"},
-    { MA_TKN_IN, "in\0"},
-    { MA_TKN_RET, "ret\0"},
-    { MA_TKN_BDN, "bnd\0"},
-    { MA_TKN_DCL, "dcl\0"}
-  };
+extern struct maTknStrPair ma_tkn_keywords[];
 
+extern size_t ma_tkn_num_keywords;
 #endif
