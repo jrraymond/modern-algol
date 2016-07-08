@@ -71,7 +71,7 @@ bool find_token(struct TokenMap *tkns, char *token, unsigned int *tkn_id) {
 bool parse_token(
   char *buffer,
   size_t buffer_sz,
-  struct TokenMap *tkns,
+  struct tokenmap *tkns,
   int *ix,
   unsigned int *tkn_id
   ) {

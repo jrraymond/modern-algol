@@ -79,6 +79,24 @@ struct Production {
   size_t rhs_sz;
 }
 
+void skip_spaces(char *buffer, int *ix);
+
+bool find_token(struct TokenMap *tkns, char *token, unsigned int *tkn_id);
+
+void parse_line(
+  char *buffer,
+  size_t buffer_sz,
+  struct TokenMap *tkns,
+  struct Production *prod
+   );
+
+bool parse_token(
+  char *buffer,
+  size_t buffer_sz,
+  struct tokenmap *tkns,
+  int *ix,
+  unsigned int *tkn_id
+  );
 
 void production_del(struct Production *prod);
 
