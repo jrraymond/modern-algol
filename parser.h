@@ -1,8 +1,8 @@
 #ifndef __MODERN_ALGOL_PARSER_H
 #define __MODERN_ALGOL_PARSER_H
 
-#include "dynamic_array.h"
-#include "hashtable.h"
+#include "cutils/dynamic_array.h"
+#include "cutils/hashtable.h"
 #include "types.h"
 #include "lexer.h"
 

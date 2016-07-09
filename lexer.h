@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 #include <ctype.h>
-#include "dynamic_array.h"
-#include "hashtable.h"
+#include "cutils/dynamic_array.h"
+#include "cutils/hashtable.h"
 #include "debug.h"
 
 enum maTokenE {

@@ -11,8 +11,10 @@ void gen_table(
   struct ActionTable *action_table,
   struct GotoTable *goto_table
   ) {
-  char buffer[4096];
-
+  struct Production *productions;
+  struct TokenMap token_map;
+  size_t num_productions;
+  parse_grammar(fname, &productions, &num_productions, &token_map);
 }
 
 void action_table_init(
@@ -125,6 +127,33 @@ void parse_line(char *buffer, size_t buffer_sz, struct TokenMap *tkns, struct Pr
   }
   prod->rhs_sz = tkn_ix;
   realloc(prod->rhs, sizeof(unsigned int) * prod->rhs_sz);
+}
+
+void parse_grammar(
+  char *fname,
+  struct Production *prod,
+  size_t *productions,
+  struct TokenMap *token_map
+  )
+{
+  FILE *fp;
+  char *line;
+  size_t len = 0;
+  ssize_t read;
+  const size_t MAX_PRODUCTIONS = 1024;
+  const size_t MAX_TOKENS = 1024;
+  prod = malloc(MAX_PRODUCTIONS * sizeof(struct Production));
+  *num_prods = 0;
+
+  fp = fopen(fname, "r");
+  if (!fp) 
+    exit(EXIT_FAILURE);
+
+  while ((read = getline(&line, &len, fp)) != -1) {
+    parse_line(line, len, tkns, &prod[*num_prods]);
+    ++(*num_prods);
+  }
+  realloc(prod, num_prods*sizeof(struct Production));
 }
 
 void production_del(struct Production *prod) {

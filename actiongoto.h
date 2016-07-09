@@ -1,6 +1,8 @@
 #ifndef __ACTIONGOTO_H
 #define __ACTIONGOTO_H
 
+#define _GNU_SOURCE
+
 /* generates action/goto tables for shift-reduce parsing */
 enum ActionE = { SHIFT=0, REDUCE };
 
@@ -96,6 +98,13 @@ bool parse_token(
   struct tokenmap *tkns,
   int *ix,
   unsigned int *tkn_id
+  );
+
+void parse_grammar(
+  char *fname,
+  struct Production **prod,
+  size_t *productions,
+  struct TokenMap *token_map
   );
 
 void production_del(struct Production *prod);
