@@ -88,7 +88,7 @@ void parse_line(
   char *buffer,
   size_t buffer_sz,
   struct DynArray *tkns,
-  struct DynArray *prod
+  struct Production *prod
    );
 
 bool parse_token(

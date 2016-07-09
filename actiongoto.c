@@ -109,7 +109,7 @@ void parse_line(
   char *buffer,
   size_t buffer_sz,
   struct DynArray *tkns,
-  struct DynArray *prod
+  struct Production *prod
   ) 
 {
   char nonterminal[32];
@@ -125,6 +125,7 @@ void parse_line(
     printf("ERROR: COULD NOT FIND TOKEN \"%s\"\n", nonterminal);
     exit(0);
   }
+  prod->nonterminal = nonterminal_id;
 
   skip_spaces(buffer, &ix);
   if (buffer[ix] != '=') {
@@ -133,14 +134,13 @@ void parse_line(
   }
   skip_spaces(buffer, &ix);
 
-  while (parse_token(buffer, buffer_sz, tkns, &ix, &prod->rhs[tkn_ix])) {
-    ++tkn_ix;
-    if (tkn_ix >= MAX_TOKENS) {
-      printf("TOO MANY TOKENS");
-      exit(0);
-    }
-  }
-  da_append(prod->rhs, &tkn_ix);
+  unsigned int tkn_id;
+  bool ok = true;
+  do {
+    da_get_ref(&prod->rhs, tkn_ix, (void**) &tkn_id);
+    ok = parse_token(buffer, buffer_sz, tkns, &ix, &tkn_id);
+  } while (ok);
+  da_append(&prod->rhs, (void**) &tkn_id);
 }
 
 void parse_grammar(
