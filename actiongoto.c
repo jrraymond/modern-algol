@@ -10,18 +10,26 @@ void gen_table(
   char *fname,
   struct ActionTable *action_table,
   struct GotoTable *goto_table
-  ) {
-  struct Production *productions;
-  struct TokenMap token_map;
-  size_t num_productions;
-  parse_grammar(fname, &productions, &num_productions, &token_map);
+  )
+{
+  struct DynArray productions;
+  struct DynArray token_map;
+
+  da_DynArray_init(&productions, 0, sizeof(struct Production));
+  da_DynArray_init(&token_map, 0, sizeof(struct TokenPair));
+
+  parse_grammar(fname, &productions, &token_map);
+
+  da_DynArray_del(&productions);
+  da_DynArray_del(&token_map);
 }
 
 void action_table_init(
   struct ActionTable *action_table,
   size_t terminals,
   size_t states
-  ) {
+  )
+{
   action_table->terminals = terminals;
   action_table->states = states;
   action_table->table = malloc(sizeof(struct Action*)*states);
@@ -33,7 +41,8 @@ void goto_table_init(
   struct GotoTable *goto_table,
   size_t nonterminals,
   size_t states
-  ) {
+  )
+{
   goto_table->nonterminals = nonterminals;
   goto_table->states = states;
   goto_table->table = malloc(sizeof(unsigned int*) * states);
@@ -60,10 +69,12 @@ void skip_spaces(char *buffer, int *ix) {
     ++(*ix);
 }
 
-bool find_token(struct TokenMap *tkns, char *token, unsigned int *tkn_id) {
-  for (int i=0; i<tkns->sz; ++i) {
-    if (strcmp(tkns->map[i].str, token) == 0) {
-      *tkn_id = tkns->map[i].id;
+bool find_token(struct DynArray *tkns, char *token, unsigned int *tkn_id) {
+  for (int i=0; i<tkns->size; ++i) {
+    struct TokenPair *tkn_pair;
+    da_get_ref(tkns, i, (void**) &tkn_pair);
+    if (strcmp(tkn_pair->str, token) == 0) {
+      *tkn_id = tkn_pair->id;
       return true;
     }
   }
@@ -73,10 +84,11 @@ bool find_token(struct TokenMap *tkns, char *token, unsigned int *tkn_id) {
 bool parse_token(
   char *buffer,
   size_t buffer_sz,
-  struct tokenmap *tkns,
+  struct DynArray *tkns,
   int *ix,
   unsigned int *tkn_id
-  ) {
+  )
+{
   char token_buffer[32];
   int i = *ix;
   int j = 0;
@@ -93,11 +105,14 @@ bool parse_token(
   return true;
 }
 
-void parse_line(char *buffer, size_t buffer_sz, struct TokenMap *tkns, struct Production *prod) {
+void parse_line(
+  char *buffer,
+  size_t buffer_sz,
+  struct DynArray *tkns,
+  struct DynArray *prod
+  ) 
+{
   char nonterminal[32];
-  const int MAX_TOKENS = 32;
-  prod->rhs = malloc(MAX_TOKENS*sizeof(unsigned int));
-  prod->rhs_sz = MAX_TOKENS;
   int tkn_ix = 0;
   int ix = 0;
   while (buffer[ix] != ' ') {
@@ -106,7 +121,7 @@ void parse_line(char *buffer, size_t buffer_sz, struct TokenMap *tkns, struct Pr
   }
   nonterminal[ix] = '\0';
   unsigned int nonterminal_id;
-  if (!find_token(tkns, nonterminal, &prod->nonterminal)) {
+  if (!find_token(tkns, nonterminal, &nonterminal_id)) {
     printf("ERROR: COULD NOT FIND TOKEN \"%s\"\n", nonterminal);
     exit(0);
   }
@@ -125,37 +140,36 @@ void parse_line(char *buffer, size_t buffer_sz, struct TokenMap *tkns, struct Pr
       exit(0);
     }
   }
-  prod->rhs_sz = tkn_ix;
-  realloc(prod->rhs, sizeof(unsigned int) * prod->rhs_sz);
+  da_append(prod->rhs, &tkn_ix);
 }
 
 void parse_grammar(
   char *fname,
-  struct Production *prod,
-  size_t *productions,
-  struct TokenMap *token_map
+  struct DynArray *productions,
+  struct DynArray *token_map
   )
 {
   FILE *fp;
   char *line;
   size_t len = 0;
   ssize_t read;
-  const size_t MAX_PRODUCTIONS = 1024;
-  const size_t MAX_TOKENS = 1024;
-  prod = malloc(MAX_PRODUCTIONS * sizeof(struct Production));
-  *num_prods = 0;
 
   fp = fopen(fname, "r");
   if (!fp) 
     exit(EXIT_FAILURE);
 
   while ((read = getline(&line, &len, fp)) != -1) {
-    parse_line(line, len, tkns, &prod[*num_prods]);
-    ++(*num_prods);
+    struct Production p;
+    production_init(&p);
+    parse_line(line, len, token_map, &p);
+    da_append(productions, &p); //move, so no del
   }
-  realloc(prod, num_prods*sizeof(struct Production));
+}
+
+void production_init(struct Production *prod) {
+  da_DynArray_init(&prod->rhs, 0, sizeof(unsigned int));
 }
 
 void production_del(struct Production *prod) {
-  free(prod->rhs);
+  da_DynArray_del(&prod->rhs);
 }

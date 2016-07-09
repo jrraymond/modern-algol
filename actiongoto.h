@@ -2,15 +2,21 @@
 #define __ACTIONGOTO_H
 
 #define _GNU_SOURCE
+#include <stdlib.h>
+#include <stdbool.h>
+#include <dynamic_array.h>
 
 /* generates action/goto tables for shift-reduce parsing */
-enum ActionE = { SHIFT=0, REDUCE };
+enum ActionE {
+  SHIFT=0,
+  REDUCE
+};
 
 /* An action struct is a pair of the state and whether to shift or reduce */
 struct Action {
   unsigned int state;
   enum ActionE sr;
-}
+};
 
 /* An action table is a two dimensional array where the rows are the state, the
  * cols are the terminals, and the items in the cell is the action to perform
@@ -21,7 +27,7 @@ struct ActionTable {
   struct Action **table;
   size_t terminals;
   size_t states;
-}
+};
 
 /* A goto table is a two dimensional array where the rows are states, the cols
  * are nonterminal tokens, and the item in the cell is the state to goto for
@@ -32,7 +38,7 @@ struct GotoTable {
   unsigned int **table;
   size_t nonterminals;
   size_t states;
-}
+};
 
 void gen_table(
   char *fname,
@@ -67,46 +73,39 @@ void goto_table_del(struct GotoTable *goto_table);
 struct TokenPair {
   unsigned int id;
   char *str;
-}
-
-struct TokenMap {
-  struct TokenPair *map;
-  size_t sz;
-}
-
+};
 
 struct Production {
   unsigned int nonterminal;
-  unsigned int *rhs;
-  size_t rhs_sz;
-}
+  struct DynArray rhs;
+};
 
 void skip_spaces(char *buffer, int *ix);
 
-bool find_token(struct TokenMap *tkns, char *token, unsigned int *tkn_id);
+bool find_token(struct DynArray *tkns, char *token, unsigned int *tkn_id);
 
 void parse_line(
   char *buffer,
   size_t buffer_sz,
-  struct TokenMap *tkns,
-  struct Production *prod
+  struct DynArray *tkns,
+  struct DynArray *prod
    );
 
 bool parse_token(
   char *buffer,
   size_t buffer_sz,
-  struct tokenmap *tkns,
+  struct DynArray *tkns,
   int *ix,
   unsigned int *tkn_id
   );
 
 void parse_grammar(
   char *fname,
-  struct Production **prod,
-  size_t *productions,
-  struct TokenMap *token_map
+  struct DynArray *productions,
+  struct DynArray *token_map
   );
 
+void production_init(struct Production *prod);
 void production_del(struct Production *prod);
 
 #endif

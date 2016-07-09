@@ -1,12 +1,12 @@
 IDIR=$(CURDIR)
 BUILD=build
 CC=clang
-CFLAGS=-I$(IDIR) -Wall -std=c99 -lm -g -DDEBUG=1 -Wno-missing-braces
 CUTILS_DIR := $(CURDIR)/cutils
 LDFLAGS := -L$(CUTILS_DIR)
+CFLAGS=-I$(IDIR) -I$(CUTILS_DIR) -Wall -std=c99 -lm -g -DDEBUG=1 -Wno-missing-braces
 
 
-OBJS=lexer.o 
+OBJS=lexer.o parser.o actiongoto.o
 .c.o: 
 	$(CC) -c $(CFLAGS) $<
 
