@@ -7,9 +7,9 @@ void test_parse_grammar() {
   struct DynArray productions;
   struct DynArray token_map;
 
-  da_DynArray_init(&productions, 0, sizeof(struct Production));
+  da_DynArray_init(&productions, 1024, sizeof(struct Production));
   printf("initialized productions\n");
-  da_DynArray_init(&token_map, 0, sizeof(struct TokenPair));
+  da_DynArray_init(&token_map, 1024, sizeof(struct TokenPair));
   printf("initialized tokenpair\n");
 
   parse_grammar(fname, &productions, &token_map);

@@ -97,16 +97,18 @@ bool parse_token(
   while (j < MAX_TOKEN_SZ - 1 && i < buffer_sz && !isspace(buffer[i]))
     token_buffer[j++] = buffer[i++];
   if (i > buffer_sz) {
+    free(token_buffer);
     return false;
   }
   token_buffer[j] = '\0';
 
   bool exists = find_token(tkns, token_buffer, tkn_id);
   if (!exists) {
-    printf("'%s'", token_buffer);
     struct TokenPair new_tp = {.id = tkns->size, .str = token_buffer};
     *tkn_id = new_tp.id;
     da_append(tkns, &new_tp);
+  } else {
+    free(token_buffer);
   }
   *ix = i;
   return true;
@@ -174,6 +176,14 @@ void parse_grammar(
     production_init(&p);
     parse_line(line, len, token_map, &p);
     da_append(productions, &p); //move, so no del
+
+    printf("tokens:\n");
+    for (int i=0; i<token_map->size; ++i) {
+      struct TokenPair *p;
+      da_get_ref(token_map, i, &p);
+      printf("%u:%s,",p->id,p->str);
+    }
+    printf("\n");
   }
   int err = fclose(fp);
 
