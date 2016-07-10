@@ -13,6 +13,9 @@ OBJS=lexer.o parser.o actiongoto.o
 malgol: malgol.c $(OBJS) cutils
 	$(CC) $(CFLAGS) -o malgol malgol.c $(OBJS) $(LDFLAGS) -lcutils
 
+test: test_actiongoto.c $(OBJS) cutils
+	$(CC) $(CFLAGS) -o test test_actiongoto.c $(OBJS) $(LDFLAGS) -lcutils
+
 .PHONY: cutils
 cutils:
 	$(MAKE) -C $(CUTILS_DIR)

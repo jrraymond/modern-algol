@@ -15,8 +15,8 @@ void gen_table(
   struct DynArray productions;
   struct DynArray token_map;
 
-  da_DynArray_init(&productions, 0, sizeof(struct Production));
-  da_DynArray_init(&token_map, 0, sizeof(struct TokenPair));
+  da_DynArray_init(&productions, 1024, sizeof(struct Production));
+  da_DynArray_init(&token_map, 1024, sizeof(struct TokenPair));
 
   parse_grammar(fname, &productions, &token_map);
 
@@ -32,7 +32,7 @@ void action_table_init(
 {
   action_table->terminals = terminals;
   action_table->states = states;
-  action_table->table = malloc(sizeof(struct Action*)*states);
+  action_table->table = malloc(sizeof(struct Action*) * states);
   for (int i=0; i<states; ++i)
     action_table->table[i] = malloc(sizeof(struct Action) * terminals);
 }
@@ -64,7 +64,7 @@ void goto_table_del(struct GotoTable *goto_table) {
 
 
 /* ******************** PARSING ******************** */
-void skip_spaces(char *buffer, int *ix) {
+void skip_spaces(const char *const buffer, int *const ix) {
   while (buffer[*ix] == ' ')
     ++(*ix);
 }
@@ -82,86 +82,86 @@ bool find_token(struct DynArray *tkns, char *token, unsigned int *tkn_id) {
 }
 
 bool parse_token(
-  char *buffer,
-  size_t buffer_sz,
-  struct DynArray *tkns,
-  int *ix,
-  unsigned int *tkn_id
+  const char *const buffer,               //char buffer
+  const size_t buffer_sz,           //length of buffer
+  struct DynArray *const tkns,      //dynamic array of TokenPair
+  int *const ix,                    //index to start looking
+  unsigned int *const tkn_id        //index of token that is parsed
   )
 {
-  char token_buffer[32];
+  char *token_buffer = malloc(MAX_TOKEN_SZ * sizeof(char));
   int i = *ix;
-  int j = 0;
+  int j = 0; //length of token
   while (i < buffer_sz && buffer[i] != ' ')
     token_buffer[j++] = buffer[i++];
   if (i >= buffer_sz)
     return false;
   token_buffer[j] = '\0';
-  if (!find_token(tkns, token_buffer, tkn_id)) {
-    printf("ERROR: COULD NOT FIND TOKEN \"%s\"\n", token_buffer);
-    exit(0);
+
+  bool exists = find_token(tkns, token_buffer, tkn_id);
+  if (!exists) {
+    struct TokenPair new_tp = {.id = tkns->size, .str = token_buffer};
+    *tkn_id = new_tp.id;
+    da_append(tkns, &new_tp);
   }
   *ix = i;
   return true;
 }
 
 void parse_line(
-  char *buffer,
-  size_t buffer_sz,
-  struct DynArray *tkns,
-  struct Production *prod
+  const char *const buffer,
+  const size_t buffer_sz,
+  struct DynArray *const tkns,
+  struct Production *const prod //initialized production
   ) 
 {
-  char nonterminal[32];
-  int tkn_ix = 0;
   int ix = 0;
-  while (buffer[ix] != ' ') {
-    nonterminal[ix] = buffer[ix];
-    ++ix;
+  unsigned int lhs_id;
+  bool succ = parse_token(buffer, buffer_sz, tkns, &ix, &lhs_id);
+  if (!succ) {
+    fprintf(stderr, "ERROR: COULD NOT PARSE LHS: %s\n", buffer);
+    exit(EXIT_SUCCESS);
   }
-  nonterminal[ix] = '\0';
-  unsigned int nonterminal_id;
-  if (!find_token(tkns, nonterminal, &nonterminal_id)) {
-    printf("ERROR: COULD NOT FIND TOKEN \"%s\"\n", nonterminal);
-    exit(0);
-  }
-  prod->nonterminal = nonterminal_id;
+  prod->lhs = lhs_id;
 
   skip_spaces(buffer, &ix);
-  if (buffer[ix] != '=') {
-    printf("ERROR: EXPECTED '='");
-    exit(0);
+  if (buffer[ix] != '-' && buffer[++ix] != '>') {
+    fprintf(stderr, "ERROR: EXPECTED '->'");
+    exit(EXIT_SUCCESS);
   }
-  skip_spaces(buffer, &ix);
 
-  unsigned int tkn_id;
-  bool ok = true;
-  do {
-    da_get_ref(&prod->rhs, tkn_ix, (void**) &tkn_id);
-    ok = parse_token(buffer, buffer_sz, tkns, &ix, &tkn_id);
-  } while (ok);
-  da_append(&prod->rhs, (void**) &tkn_id);
+  for(;;) {
+    skip_spaces(buffer, &ix);
+
+    unsigned int tkn_id;
+    bool ok = parse_token(buffer, buffer_sz, tkns, &ix, &tkn_id);
+    if (!ok) {
+      break;
+    }
+    da_append(&prod->rhs, (void**) &tkn_id);
+  }
 }
 
 void parse_grammar(
-  char *fname,
-  struct DynArray *productions,
-  struct DynArray *token_map
+  const char *const fname,
+  struct DynArray *const productions,
+  struct DynArray *const token_map
   )
 {
+  const int MAX_LINE_SZ = 128;
   FILE *fp;
-  char *line;
-  size_t len = 0;
-  ssize_t read;
+  char line[MAX_LINE_SZ];
 
   fp = fopen(fname, "r");
-  if (!fp) 
+  if (!fp) {
+    fprintf(stderr, "ERROR: file not found\n");
     exit(EXIT_FAILURE);
+  }
 
-  while ((read = getline(&line, &len, fp)) != -1) {
+  while (fgets(line, MAX_LINE_SZ, fp) != NULL) {
     struct Production p;
     production_init(&p);
-    parse_line(line, len, token_map, &p);
+    parse_line(line, strlen(line), token_map, &p);
     da_append(productions, &p); //move, so no del
   }
 }

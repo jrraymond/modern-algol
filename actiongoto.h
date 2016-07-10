@@ -1,7 +1,6 @@
 #ifndef __ACTIONGOTO_H
 #define __ACTIONGOTO_H
 
-#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdbool.h>
 #include <dynamic_array.h>
@@ -76,36 +75,45 @@ struct TokenPair {
 };
 
 struct Production {
-  unsigned int nonterminal;
+  unsigned int lhs;
   struct DynArray rhs;
 };
 
-void skip_spaces(char *buffer, int *ix);
+void skip_spaces(const char *const buffer, int *const ix);
 
 bool find_token(struct DynArray *tkns, char *token, unsigned int *tkn_id);
 
-void parse_line(
-  char *buffer,
-  size_t buffer_sz,
-  struct DynArray *tkns,
-  struct Production *prod
-   );
-
+/* parses a single token from a character buffer starting at ix
+ * returns true of token parsed, false otherwise
+ */
 bool parse_token(
-  char *buffer,
-  size_t buffer_sz,
-  struct DynArray *tkns,
-  int *ix,
-  unsigned int *tkn_id
+  const char *const buffer,               //char buffer
+  const size_t buffer_sz,           //length of buffer
+  struct DynArray *const tkns,      //dynamic array of TokenPair
+  int *const ix,                    //index to start looking
+  unsigned int *const tkn_id        //index of token that is parsed
   );
 
+/* parses line of input into a production */
+void parse_line(
+  const char *const buffer,
+  const size_t buffer_sz,
+  struct DynArray *const tkns,
+  struct Production *const prod //initialized production
+   );
+
+/* parses file and fills two dynamic array with productions and a token map
+ * from strings to ids, respectively
+ */
 void parse_grammar(
-  char *fname,
-  struct DynArray *productions,
-  struct DynArray *token_map
+  const char *const fname,                  //filename
+  struct DynArray *const productions, //initialized dynamic array of struct Production
+  struct DynArray *const token_map    //initialized dynamic array of struct TokenPair
   );
 
 void production_init(struct Production *prod);
 void production_del(struct Production *prod);
+
+static const size_t MAX_TOKEN_SZ = 32;
 
 #endif
