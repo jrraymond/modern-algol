@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "debug.h"
+
 void gen_table(
   char *fname,
   struct ActionTable *action_table,
@@ -92,14 +94,16 @@ bool parse_token(
   char *token_buffer = malloc(MAX_TOKEN_SZ * sizeof(char));
   int i = *ix;
   int j = 0; //length of token
-  while (i < buffer_sz && buffer[i] != ' ')
+  while (j < MAX_TOKEN_SZ - 1 && i < buffer_sz && !isspace(buffer[i]))
     token_buffer[j++] = buffer[i++];
-  if (i >= buffer_sz)
+  if (i > buffer_sz) {
     return false;
+  }
   token_buffer[j] = '\0';
 
   bool exists = find_token(tkns, token_buffer, tkn_id);
   if (!exists) {
+    printf("'%s'", token_buffer);
     struct TokenPair new_tp = {.id = tkns->size, .str = token_buffer};
     *tkn_id = new_tp.id;
     da_append(tkns, &new_tp);
@@ -123,14 +127,16 @@ void parse_line(
     exit(EXIT_SUCCESS);
   }
   prod->lhs = lhs_id;
+  printf("LHS: %u\n", prod->lhs);
 
   skip_spaces(buffer, &ix);
-  if (buffer[ix] != '-' && buffer[++ix] != '>') {
+  if (buffer[ix++] != '-' || buffer[ix++] != '>') {
     fprintf(stderr, "ERROR: EXPECTED '->'");
     exit(EXIT_SUCCESS);
   }
 
-  for(;;) {
+  printf("RHS:");
+  while (ix < buffer_sz && buffer[ix] != '\n') {
     skip_spaces(buffer, &ix);
 
     unsigned int tkn_id;
@@ -139,7 +145,9 @@ void parse_line(
       break;
     }
     da_append(&prod->rhs, (void**) &tkn_id);
+    printf("%u,", tkn_id);
   }
+  printf("%s", "\n");
 }
 
 void parse_grammar(
@@ -157,13 +165,21 @@ void parse_grammar(
     fprintf(stderr, "ERROR: file not found\n");
     exit(EXIT_FAILURE);
   }
+  debug_print("opened file: %s\n", fname);
 
   while (fgets(line, MAX_LINE_SZ, fp) != NULL) {
+    size_t len = strlen(line);
+    debug_print("read %zu chars\n", len);
     struct Production p;
     production_init(&p);
-    parse_line(line, strlen(line), token_map, &p);
+    parse_line(line, len, token_map, &p);
     da_append(productions, &p); //move, so no del
   }
+  int err = fclose(fp);
+
+  debug_print("closed file: %s\n", fname);
+  if (err)
+    fprintf(stderr, "ERROR: while closing file %s\n", fname);
 }
 
 void production_init(struct Production *prod) {

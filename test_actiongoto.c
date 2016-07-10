@@ -8,12 +8,17 @@ void test_parse_grammar() {
   struct DynArray token_map;
 
   da_DynArray_init(&productions, 0, sizeof(struct Production));
+  printf("initialized productions\n");
   da_DynArray_init(&token_map, 0, sizeof(struct TokenPair));
+  printf("initialized tokenpair\n");
 
   parse_grammar(fname, &productions, &token_map);
+  printf("parsed grammar\n");
 
   da_DynArray_del(&productions);
+  printf("destructed productions\n");
   da_DynArray_del(&token_map);
+  printf("destructed tokenpair\n");
 }
 
 int main(int argc, char** argv) {
