@@ -2,7 +2,7 @@
 
 
 void test_parse_grammar() {
-  char* fname = "test_grammar_arith.txt";
+  char* fname = "test_grammar_parens.txt";
 
   struct DynArray productions;
   struct DynArray token_map;
