@@ -3,7 +3,25 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <dynamic_array.h>
+#include <unordered_set.h>
+#include <hash_functions.h>
+
+/* We will need sets of Items */
+struct Item;
+struct Item {
+  uint32_t lhs;     //nonterminal
+  uint32_t *before; //tokens before dot
+  size_t before_size;     //num tokens before dot
+  uint32_t *after;  //tokens after dot
+  size_t after_size;      //num tokens after dot
+};
+
+uint64_t item_hash(struct Item i);
+bool item_eq(struct Item i, struct Item j);
+
+UNORDERED_SET_INIT(item, static, struct Item, uint64_t, item_hash, item_eq)
 
 /* generates action/goto tables for shift-reduce parsing */
 enum ActionE {
@@ -13,7 +31,7 @@ enum ActionE {
 
 /* An action struct is a pair of the state and whether to shift or reduce */
 struct Action {
-  unsigned int state;
+  uint32_t state;
   enum ActionE sr;
 };
 
@@ -34,7 +52,7 @@ struct ActionTable {
  * The struct holds the dimensions of the array.
  */
 struct GotoTable {
-  unsigned int **table;
+  uint32_t **table;
   size_t nonterminals;
   size_t states;
 };
@@ -70,18 +88,18 @@ void action_table_del(struct ActionTable *action_table);
 void goto_table_del(struct GotoTable *goto_table);
 
 struct TokenPair {
-  unsigned int id;
+  uint32_t id;
   char *str;
 };
 
 struct Production {
-  unsigned int lhs;
+  uint32_t lhs;
   struct DynArray rhs;
 };
 
 void skip_spaces(const char *const buffer, int *const ix);
 
-bool find_token(struct DynArray *tkns, char *token, unsigned int *tkn_id);
+bool find_token(struct DynArray *tkns, char *token, uint32_t *tkn_id);
 
 /* parses a single token from a character buffer starting at ix
  * returns true of token parsed, false otherwise
@@ -91,7 +109,7 @@ bool parse_token(
   const size_t buffer_sz,           //length of buffer
   struct DynArray *const tkns,      //dynamic array of TokenPair
   int *const ix,                    //index to start looking
-  unsigned int *const tkn_id        //index of token that is parsed
+  uint32_t *const tkn_id        //index of token that is parsed
   );
 
 /* parses line of input into a production */
@@ -115,5 +133,50 @@ void production_init(struct Production *prod);
 void production_del(struct Production *prod);
 
 static const size_t MAX_TOKEN_SZ = 32;
+
+/* Items */
+
+uint64_t item_hash(struct Item item) {
+  int i, j;
+  uint32_t h0 = uint32_hash_thomas_mueller(item.lhs);
+  for (i = 0; i < item.before_size; ++i) {
+    uint32_t hi = uint32_hash_thomas_mueller(item.before[i]);
+    h0 += hi * (i + 1);
+  }
+  for (j = 0; j < item.after_size; ++j) {
+    uint32_t hj = uint32_hash_thomas_mueller(item.after[j]);
+    h0 += hj * (j + i + 1);
+  }
+  return h0;
+}
+
+bool item_eq(struct Item a, struct Item b) {
+  if (a.lhs != b.lhs)
+    return false;
+  if (a.before_size != b.before_size)
+    return false;
+  if (a.after_size != b.after_size)
+    return false;
+  for (int i=0; i<a.before_size; ++i) {
+    if (a.before[i] != b.before[i])
+      return false;
+  }
+  for (int i=0; i<a.after_size; ++i) {
+    if (a.after[i] != b.after[i])
+      return false;
+  }
+  return true;
+}
+
+/* generates all items from a production and adds them to the item set.
+ */
+void gen_prod_items(
+  struct Production *p, 
+  us_item_t *item_set,
+  ) {
+  return;
+}
+  
+
 
 #endif

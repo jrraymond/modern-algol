@@ -1,6 +1,6 @@
 IDIR=$(CURDIR)
 BUILD=build
-CC=clang
+CC=gcc
 CUTILS_DIR := $(CURDIR)/cutils
 LDFLAGS := -L$(CUTILS_DIR)
 CFLAGS=-I$(IDIR) -I$(CUTILS_DIR) -Wall -std=c99 -lm -g -DDEBUG=1 -Wno-missing-braces
