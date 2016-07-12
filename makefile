@@ -3,7 +3,7 @@ BUILD=build
 CC=gcc
 CUTILS_DIR := $(CURDIR)/cutils
 LDFLAGS := -L$(CUTILS_DIR)
-CFLAGS=-I$(IDIR) -I$(CUTILS_DIR) -Wall -std=c99 -lm -g -DDEBUG=1 -Wno-missing-braces
+CFLAGS=-I$(IDIR) -I$(CUTILS_DIR) -Wall -std=c99 -g -DDEBUG=1 -Wno-missing-braces
 
 
 OBJS=lexer.o parser.o actiongoto.o
@@ -14,7 +14,7 @@ malgol: malgol.c $(OBJS) cutils
 	$(CC) $(CFLAGS) -o malgol malgol.c $(OBJS) $(LDFLAGS) -lcutils
 
 test: test_actiongoto.c $(OBJS) cutils
-	$(CC) $(CFLAGS) -o test test_actiongoto.c $(OBJS) $(LDFLAGS) -lcutils
+	$(CC) $(CFLAGS) -o test test_actiongoto.c $(OBJS) $(LDFLAGS) -lcutils -lm
 
 .PHONY: cutils
 cutils:

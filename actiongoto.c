@@ -165,7 +165,7 @@ void parse_line(
     if (!ok) {
       break;
     }
-    da_append(&prod->rhs, (void**) &tkn_id);
+    da_append(&prod->rhs, (void*) &tkn_id);
     printf("%u,", tkn_id);
   }
   printf("%s", "\n");

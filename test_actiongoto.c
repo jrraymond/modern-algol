@@ -13,7 +13,7 @@ void test_parse_grammar() {
   printf("initialized tokenpair\n");
 
   parse_grammar(fname, &productions, &token_map);
-  printf("parsed grammar\n");
+  printf("parsed grammar: %lu productions\n", productions.size);
 
   /* create set of all items from productions */
   us_item_t items;
@@ -24,9 +24,8 @@ void test_parse_grammar() {
     da_get_ref(&productions, i, (void**) &p);
     gen_prod_items(p, &items);
   }
-  /* TODO FIX ITERATORS ALSO 0 ITEMS PRODUCED*/
+  /* TODO 0 ITEMS PRODUCED*/
   printf("created %lu items\n", items.size);
-  return;
   size_t itr = us_item_begin(&items);
   while (itr != us_item_end(&items)) {
     struct Item *i = &items.elems[itr];
