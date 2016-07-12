@@ -141,6 +141,8 @@ void gen_prod_items(
   struct Production *p, 
   us_item_t *item_set
   );
+
+void print_item(struct Item *item);
   
 
 

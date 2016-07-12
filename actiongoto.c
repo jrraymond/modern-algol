@@ -24,10 +24,25 @@ void gen_table(
   da_DynArray_init(&productions, 1024, sizeof(struct Production));
   da_DynArray_init(&token_map, 1024, sizeof(struct TokenPair));
 
+  /* parse productions of grammar from file */
   parse_grammar(fname, &productions, &token_map);
+
+
+  /* create set of all items from productions */
+  us_item_t items;
+  us_item_init(&items, productions.size * 8);
+
+  for (int i=0; i<productions.size; ++i) {
+    struct Production *p;
+    da_get_ref(&productions, i, (void**) &p);
+    gen_prod_items(p, &items);
+  }
+
 
   da_DynArray_del(&productions);
   da_DynArray_del(&token_map);
+
+  us_item_del(&items);
 }
 
 void action_table_init(
@@ -242,5 +257,30 @@ void gen_prod_items(
   struct Production *p, 
   us_item_t *item_set
   ) {
-
+  for (int i=0; i<=p->rhs.size; ++i) {
+    struct Item item;
+    item.lhs = p->lhs;
+    item.before_size = i;
+    item.before = malloc(item.before_size * sizeof(uint32_t));
+    for (int j=0; j<item.before_size; ++j) {
+      da_get(&p->rhs, j, (void*) &item.before[j]);
+    }
+    item.after_size = p->rhs.size - i;
+    for (int j=0; j<item.after_size; ++j) {
+      da_get(&p->rhs, i+j, (void*) &item.before[j]);
+    }
+  }
 }
+
+void print_item(struct Item *item) {
+  printf("%lu -> ", item->lhs);
+  for (int i=0; i<item->before_size; ++i) {
+    printf("%lu ", item->before[i]);
+  }
+  printf(". ");
+  for (int i=0; i<item->after_size; ++i) {
+    printf("%lu ", item->after[i]);
+  }
+  printf("\n");
+}
+
