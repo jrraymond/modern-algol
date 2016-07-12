@@ -22,6 +22,7 @@ void test_parse_grammar() {
   for (int i=0; i<productions.size; ++i) {
     struct Production *p;
     da_get_ref(&productions, i, (void**) &p);
+    printf("p %lu:(%lu)", p->lhs, p->rhs.size);
     gen_prod_items(p, &items);
   }
   /* TODO 0 ITEMS PRODUCED*/

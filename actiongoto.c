@@ -269,6 +269,7 @@ void gen_prod_items(
     for (int j=0; j<item.after_size; ++j) {
       da_get(&p->rhs, i+j, (void*) &item.before[j]);
     }
+    us_item_insert(item_set, item);
   }
 }
 
