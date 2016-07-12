@@ -62,7 +62,7 @@ void ma_parse(
  * 15 | r5 | r5 | r5 |  r5 |  r5 |  r5    r5         
  * 16 | r6 | r6 | r6 | r6  r6    r6    r6         
  * 17 | r8 | r8 | r8 | r8  r8    r8    r8         
- * /
+ */
 
 /*  SHIFT REDUCE TABLE
  *    + , - , / , % , * , ^ , NAT , VAR , { , } , ( , ) , \ , | , . 

@@ -8,8 +8,8 @@
 #include <unordered_set.h>
 #include <hash_functions.h>
 
+
 /* We will need sets of Items */
-struct Item;
 struct Item {
   uint32_t lhs;     //nonterminal
   uint32_t *before; //tokens before dot
@@ -21,7 +21,7 @@ struct Item {
 uint64_t item_hash(struct Item i);
 bool item_eq(struct Item i, struct Item j);
 
-UNORDERED_SET_INIT(item, static, struct Item, uint64_t, item_hash, item_eq)
+UNORDERED_SET_DECLARE(item, extern, struct Item, uint64_t)
 
 /* generates action/goto tables for shift-reduce parsing */
 enum ActionE {
@@ -134,48 +134,13 @@ void production_del(struct Production *prod);
 
 static const size_t MAX_TOKEN_SZ = 32;
 
-/* Items */
-
-uint64_t item_hash(struct Item item) {
-  int i, j;
-  uint32_t h0 = uint32_hash_thomas_mueller(item.lhs);
-  for (i = 0; i < item.before_size; ++i) {
-    uint32_t hi = uint32_hash_thomas_mueller(item.before[i]);
-    h0 += hi * (i + 1);
-  }
-  for (j = 0; j < item.after_size; ++j) {
-    uint32_t hj = uint32_hash_thomas_mueller(item.after[j]);
-    h0 += hj * (j + i + 1);
-  }
-  return h0;
-}
-
-bool item_eq(struct Item a, struct Item b) {
-  if (a.lhs != b.lhs)
-    return false;
-  if (a.before_size != b.before_size)
-    return false;
-  if (a.after_size != b.after_size)
-    return false;
-  for (int i=0; i<a.before_size; ++i) {
-    if (a.before[i] != b.before[i])
-      return false;
-  }
-  for (int i=0; i<a.after_size; ++i) {
-    if (a.after[i] != b.after[i])
-      return false;
-  }
-  return true;
-}
 
 /* generates all items from a production and adds them to the item set.
  */
 void gen_prod_items(
   struct Production *p, 
-  us_item_t *item_set,
-  ) {
-  return;
-}
+  us_item_t *item_set
+  );
   
 
 

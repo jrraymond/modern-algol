@@ -5,8 +5,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "debug.h"
+
+UNORDERED_SET_IMPL(item, inline, struct Item, uint64_t, item_hash, item_eq)
+
 
 void gen_table(
   char *fname,
@@ -180,7 +184,7 @@ void parse_grammar(
     printf("tokens:\n");
     for (int i=0; i<token_map->size; ++i) {
       struct TokenPair *p;
-      da_get_ref(token_map, i, &p);
+      da_get_ref(token_map, i, (void**) &p);
       printf("%u:%s,",p->id,p->str);
     }
     printf("\n");
@@ -198,4 +202,45 @@ void production_init(struct Production *prod) {
 
 void production_del(struct Production *prod) {
   da_DynArray_del(&prod->rhs);
+}
+
+/* Items */
+
+uint64_t item_hash(struct Item item) {
+  int i, j;
+  uint32_t h0 = uint32_hash_thomas_mueller(item.lhs);
+  for (i = 0; i < item.before_size; ++i) {
+    uint32_t hi = uint32_hash_thomas_mueller(item.before[i]);
+    h0 += hi * (i + 1);
+  }
+  for (j = 0; j < item.after_size; ++j) {
+    uint32_t hj = uint32_hash_thomas_mueller(item.after[j]);
+    h0 += hj * (j + i + 1);
+  }
+  return h0;
+}
+
+bool item_eq(struct Item a, struct Item b) {
+  if (a.lhs != b.lhs)
+    return false;
+  if (a.before_size != b.before_size)
+    return false;
+  if (a.after_size != b.after_size)
+    return false;
+  for (int i=0; i<a.before_size; ++i) {
+    if (a.before[i] != b.before[i])
+      return false;
+  }
+  for (int i=0; i<a.after_size; ++i) {
+    if (a.after[i] != b.after[i])
+      return false;
+  }
+  return true;
+}
+
+void gen_prod_items(
+  struct Production *p, 
+  us_item_t *item_set
+  ) {
+
 }
