@@ -153,6 +153,13 @@ void gen_closure(
   us_item_t *all_items
   );
 
+void gen_goto(
+  us_item_t *to,
+  us_item_t *from,
+  us_item_t *all_items,
+  uint32_t symbol
+  );
+
 void print_item(struct Item *item);
   
 

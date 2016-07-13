@@ -34,6 +34,7 @@ void test_parse_grammar() {
   printf("created %zu items\n", items.size);
 
 
+
   da_DynArray_del(&productions);
   printf("destructed productions\n");
 

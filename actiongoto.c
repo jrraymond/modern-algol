@@ -324,6 +324,35 @@ void gen_closure(
   da_DynArray_del(&todo);
 }
 
+void gen_goto(
+  us_item_t *to,
+  us_item_t *from,
+  us_item_t *all_items,
+  uint32_t symbol
+  )
+{
+  us_item_t set;
+  us_item_init(&set, from->size);
+  for (size_t itr = us_item_begin(from);
+      itr != us_item_end(from);
+      us_item_next(from, &itr)
+    ){
+    struct Item *item = &from->elems[itr];
+    size_t x_ix = item->dot;
+    //if dot is on the end, we can't move it over x
+    if (x_ix >= item->production.rhs.size - 1)
+      continue;
+    uint32_t x;
+    da_get(&item->production.rhs, x_ix, &x);
+    struct Item next;
+    next.dot = x_ix + 1;
+    Production_copy(&next.production, &item->production);
+    us_item_insert(&set, next);
+  }
+  gen_closure(to, &set, all_items);
+  us_item_del(&set);
+}
+
 void print_production(struct Production *p) {
   printf("%u -> ", p->lhs);
   for (int i=0; i<p->rhs.size; ++i) {
