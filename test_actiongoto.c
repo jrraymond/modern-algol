@@ -33,12 +33,6 @@ void test_parse_grammar() {
   }
   printf("created %zu items\n", items.size);
 
-  for (size_t itr = us_item_begin(&items);
-      itr != us_item_end(&items);
-      us_item_next(&items, &itr))
-  {
-    print_item(&items.elems[itr]);
-  }
 
   da_DynArray_del(&productions);
   printf("destructed productions\n");

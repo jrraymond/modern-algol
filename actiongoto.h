@@ -145,6 +145,14 @@ void gen_prod_items(
   us_item_t *item_set
   );
 
+/* generates closure (all the items in the same state) 
+ */
+void gen_closure(
+  us_item_t *to,
+  us_item_t *from,
+  us_item_t *all_items
+  );
+
 void print_item(struct Item *item);
   
 

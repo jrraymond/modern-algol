@@ -274,6 +274,55 @@ void gen_prod_items(
     us_item_insert(item_set, item);
   }
 }
+void gen_closure(
+  us_item_t *to,
+  us_item_t *from,
+  us_item_t *all_items
+  )
+{
+  /* todo is a stack of items to be added to the closure and also have their
+   * subitems added to the closure
+   */
+  struct DynArray todo;
+  da_DynArray_init(&todo, from->size, sizeof(struct Item));
+
+  for (size_t itr = us_item_begin(from);
+      itr != us_item_end(from);
+      us_item_next(from, &itr))
+  {
+    /* every item in from is in closure(from) */
+    da_append(&todo, &from->elems[itr]);
+  }
+  while (todo.size > 0) {
+    struct Item item;
+    da_get(&todo, todo.size - 1, &item);
+    da_pop(&todo);
+
+    /* if item is of the form A -> alpha B beta, we must check for items B ->
+     * gamma and add them to the todo. We do a brute for search by considering
+     * each possible single grammar symbol of A -> alpha B beta, and then
+     * search for productions B -> gamma.
+     */
+    for (size_t i=0; i<item.production.rhs.size; ++i) {
+      uint32_t b;
+      da_get(&todo, i, (void*) &b);
+      for (size_t itr = us_item_begin(all_items);
+          itr != us_item_end(all_items);
+          us_item_next(all_items, &itr))
+      {
+        struct Item *itm_ptr = &all_items->elems[itr];
+        if (itm_ptr->dot != 0)
+          continue;
+        if (itm_ptr->production.lhs != b)
+          continue;
+        da_append(&todo, itm_ptr);
+      }
+    }
+    us_item_insert(to, item); //copy memory????
+  }
+
+  da_DynArray_del(&todo);
+}
 
 void print_production(struct Production *p) {
   printf("%u -> ", p->lhs);
