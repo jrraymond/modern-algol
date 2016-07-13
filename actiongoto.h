@@ -9,19 +9,31 @@
 #include <hash_functions.h>
 
 
-/* We will need sets of Items */
-struct Item {
-  uint32_t lhs;     //nonterminal
-  uint32_t *before; //tokens before dot
-  size_t before_size;     //num tokens before dot
-  uint32_t *after;  //tokens after dot
-  size_t after_size;      //num tokens after dot
+struct TokenPair {
+  uint32_t id;
+  char *str;
 };
 
-uint64_t item_hash(struct Item i);
+struct Production {
+  uint32_t lhs;
+  struct DynArray rhs;
+};
+
+void Production_copy(struct Production *to, struct Production *from);
+
+void print_production(struct Production *p);
+/* We will need sets of Items */
+struct Item {
+  struct Production production;
+  size_t dot;
+};
+
+uint32_t production_hash(struct Production p);
+bool production_eq(struct Production a, struct Production b);
+uint32_t item_hash(struct Item i);
 bool item_eq(struct Item i, struct Item j);
 
-UNORDERED_SET_DECLARE(item, extern, struct Item, uint64_t)
+UNORDERED_SET_DECLARE(item, extern, struct Item, uint32_t)
 
 /* generates action/goto tables for shift-reduce parsing */
 enum ActionE {
@@ -87,15 +99,6 @@ void action_table_del(struct ActionTable *action_table);
 /* Frees memory held by goto table struct */
 void goto_table_del(struct GotoTable *goto_table);
 
-struct TokenPair {
-  uint32_t id;
-  char *str;
-};
-
-struct Production {
-  uint32_t lhs;
-  struct DynArray rhs;
-};
 
 void skip_spaces(const char *const buffer, int *const ix);
 

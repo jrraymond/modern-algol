@@ -1,5 +1,12 @@
 #include "actiongoto.h"
 
+void print_u32(uint32_t i) {
+  printf("%u", i);
+}
+void print_item_value(struct Item i) {
+  print_item(&i);
+}
+
 
 void test_parse_grammar() {
   char* fname = "test_grammar_parens.txt";
@@ -13,7 +20,7 @@ void test_parse_grammar() {
   printf("initialized tokenpair\n");
 
   parse_grammar(fname, &productions, &token_map);
-  printf("parsed grammar: %lu productions\n", productions.size);
+  printf("parsed grammar: %zu productions\n", productions.size);
 
   /* create set of all items from productions */
   us_item_t items;
@@ -22,16 +29,15 @@ void test_parse_grammar() {
   for (int i=0; i<productions.size; ++i) {
     struct Production *p;
     da_get_ref(&productions, i, (void**) &p);
-    printf("p %lu:(%lu)", p->lhs, p->rhs.size);
     gen_prod_items(p, &items);
   }
-  /* TODO 0 ITEMS PRODUCED*/
-  printf("created %lu items\n", items.size);
-  size_t itr = us_item_begin(&items);
-  while (itr != us_item_end(&items)) {
-    struct Item *i = &items.elems[itr];
-    print_item(i);
-    us_item_next(&items, &itr);
+  printf("created %zu items\n", items.size);
+
+  for (size_t itr = us_item_begin(&items);
+      itr != us_item_end(&items);
+      us_item_next(&items, &itr))
+  {
+    print_item(&items.elems[itr]);
   }
 
   da_DynArray_del(&productions);

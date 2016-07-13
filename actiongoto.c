@@ -9,7 +9,7 @@
 
 #include "debug.h"
 
-UNORDERED_SET_IMPL(item, inline, struct Item, uint64_t, item_hash, item_eq)
+UNORDERED_SET_IMPL(item, inline, struct Item, uint32_t, item_hash, item_eq)
 
 
 void gen_table(
@@ -220,37 +220,47 @@ void production_del(struct Production *prod) {
 }
 
 /* Items */
-
-uint64_t item_hash(struct Item item) {
-  int i, j;
-  uint32_t h0 = uint32_hash_thomas_mueller(item.lhs);
-  for (i = 0; i < item.before_size; ++i) {
-    uint32_t hi = uint32_hash_thomas_mueller(item.before[i]);
-    h0 += hi * (i + 1);
+bool production_eq(struct Production a, struct Production b) {
+  if (a.lhs != b.lhs)
+    return false;
+  if (a.rhs.size != b.rhs.size)
+    return false;
+  uint32_t x, y;
+  for (int i=0; i<a.rhs.size; ++i) {
+    da_get(&a.rhs, i, (void*) &x);
+    da_get(&b.rhs, i, (void*) &y);
+    if (x != y)
+      return false;
   }
-  for (j = 0; j < item.after_size; ++j) {
-    uint32_t hj = uint32_hash_thomas_mueller(item.after[j]);
-    h0 += hj * (j + i + 1);
+  return true;
+}
+
+uint32_t production_hash(struct Production p) {
+  uint32_t h0 = uint32_hash_thomas_mueller(p.lhs);
+  for (int i=0; i<p.rhs.size; ++i) {
+    uint32_t x;
+    da_get(&p.rhs, i, (void*) &x);
+    uint32_t hi = uint32_hash_thomas_mueller(x);
+    h0 += hi * (i+1);
   }
   return h0;
 }
 
+void Production_copy(struct Production *to, struct Production *from) {
+  to->lhs = from->lhs;
+  da_DynArray_copy(&to->rhs, &from->rhs);
+}
+
+uint32_t item_hash(struct Item item) {
+  uint32_t h0 = uint32_hash_thomas_mueller(item.dot);
+  uint32_t h1 = production_hash(item.production);
+  return h0 + h1;
+}
+
 bool item_eq(struct Item a, struct Item b) {
-  if (a.lhs != b.lhs)
+  if (a.dot != b.dot)
     return false;
-  if (a.before_size != b.before_size)
-    return false;
-  if (a.after_size != b.after_size)
-    return false;
-  for (int i=0; i<a.before_size; ++i) {
-    if (a.before[i] != b.before[i])
-      return false;
-  }
-  for (int i=0; i<a.after_size; ++i) {
-    if (a.after[i] != b.after[i])
-      return false;
-  }
-  return true;
+  return production_eq(a.production, b.production);
 }
 
 void gen_prod_items(
@@ -259,28 +269,34 @@ void gen_prod_items(
   ) {
   for (int i=0; i<=p->rhs.size; ++i) {
     struct Item item;
-    item.lhs = p->lhs;
-    item.before_size = i;
-    item.before = malloc(item.before_size * sizeof(uint32_t));
-    for (int j=0; j<item.before_size; ++j) {
-      da_get(&p->rhs, j, (void*) &item.before[j]);
-    }
-    item.after_size = p->rhs.size - i;
-    for (int j=0; j<item.after_size; ++j) {
-      da_get(&p->rhs, i+j, (void*) &item.before[j]);
-    }
+    Production_copy(&item.production, p);
+    item.dot = i;
     us_item_insert(item_set, item);
   }
 }
 
+void print_production(struct Production *p) {
+  printf("%u -> ", p->lhs);
+  for (int i=0; i<p->rhs.size; ++i) {
+    uint32_t x;
+    da_get(&p->rhs, i, (void*) &x);
+    printf("%u,", x);
+  }
+}
+
+
 void print_item(struct Item *item) {
-  printf("%lu -> ", item->lhs);
-  for (int i=0; i<item->before_size; ++i) {
-    printf("%lu ", item->before[i]);
+  printf("%u(%lu|%lu) -> ", item->production.lhs, item->dot, item->production.rhs.size);
+  for (int i=0; i<item->dot; ++i) {
+    uint32_t x;
+    da_get(&item->production.rhs, i, (void*) &x);
+    printf("%u ", x);
   }
   printf(". ");
-  for (int i=0; i<item->after_size; ++i) {
-    printf("%lu ", item->after[i]);
+  for (int i=item->dot; i<item->production.rhs.size; ++i) {
+    uint32_t x;
+    da_get(&item->production.rhs, i, (void*) &x);
+    printf("%u ", x);
   }
   printf("\n");
 }
