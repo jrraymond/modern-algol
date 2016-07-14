@@ -364,7 +364,7 @@ void gen_goto(
 
 
 void gen_dfa(
-  struct dg_us_item_u8_t *dfa,
+  struct DenseGraph_us_item_u8_t *dfa,
   us_item_t *all_items,
   struct Item *start
   )
@@ -376,13 +376,40 @@ void gen_dfa(
   us_item_t start_state;
   us_item_init(&start_state, 8);
 
-  gen_closure(&start_state, &tmp);
+  gen_closure(&start_state, &tmp, all_items);
 
-  bool additions = false;
+  uint8_t idx = dg_us_item_u8_add_node(dfa, start_state);
 
+
+  
+
+  bool additions;
   do {
-    size_t itr = us_item_begin
-
+    additions = false;
+    for (size_t state_itr = dg_us_item_u8_nodes_begin(dfa);
+        state_itr != dg_us_item_u8_nodes_end(dfa);
+        dg_us_item_u8_nodes_next(dfa, &state_itr)
+        ) {
+      us_item_t *curr_state;
+      dg_us_item_u8_get_node_ref(dfa, state_itr, &curr_state);
+      for (size_t item_itr = us_item_begin(curr_state);
+          item_itr != us_item_end(curr_state);
+          us_item_next(curr_state, &item_itr)
+          ) {
+        us_item_t new_state;
+        us_item_init(&new_state, 0);
+        struct Item *item = &curr_state->elems[item_itr];
+        if (item->dot == item->production.rhs.size) {
+          continue;
+        }
+        uint8_t symbol;
+        da_get(&item->production.rhs, item->dot, &symbol);
+        gen_goto(&new_state, curr_state, all_items, symbol);
+        //if new state not already a state th
+        //then make new one and add an edge from curr state  to new state
+        additions = true;
+      }
+    }
   } while (additions);
 
   us_item_del(&tmp);
