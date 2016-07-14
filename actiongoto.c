@@ -8,8 +8,17 @@
 #include <ctype.h>
 
 #include "debug.h"
+#include "dense_graph.h"
+#include "unordered_set.h"
 
+
+
+/* We need to keep track of sets of items */
 UNORDERED_SET_IMPL(item, inline, struct Item, uint32_t, item_hash, item_eq)
+
+
+/* The DFA has nodes of sets of items and edges as symbols */
+DENSE_GRAPH_INIT(us_item_u8, uint32_t, us_item_t, uint32_t)
 
 
 void gen_table(
@@ -351,6 +360,32 @@ void gen_goto(
   }
   gen_closure(to, &set, all_items);
   us_item_del(&set);
+}
+
+
+void gen_dfa(
+  struct dg_us_item_u8_t *dfa,
+  us_item_t *all_items,
+  struct Item *start
+  )
+{
+  us_item_t tmp;
+  us_item_init(&tmp, 1);
+  us_item_insert(&tmp, *start);
+
+  us_item_t start_state;
+  us_item_init(&start_state, 8);
+
+  gen_closure(&start_state, &tmp);
+
+  bool additions = false;
+
+  do {
+    size_t itr = us_item_begin
+
+  } while (additions);
+
+  us_item_del(&tmp);
 }
 
 void print_production(struct Production *p) {
