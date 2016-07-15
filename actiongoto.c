@@ -16,6 +16,20 @@
 /* We need to keep track of sets of items */
 UNORDERED_SET_IMPL(item, inline, struct Item, uint32_t, item_hash, item_eq)
 
+uint32_t us_item_hash(us_item_t *item_set) {
+  uint32_t hash = 0;
+  for (size_t itr = us_item_begin(item_set);
+      itr != us_item_end(item_set);
+      us_item_next(item_set, &itr)
+      ) {
+    hash += item_hash(item_set->elems[itr]);
+  }
+  return hash;
+}
+
+
+UNORDERED_SET_DECLARE(usitem, static inline, us_item_t*, uint32_t)
+UNORDERED_SET_IMPL(usitem, static, us_item_t*, uint32_t, us_item_hash, us_item_eq)
 
 /* The DFA has nodes of sets of items and edges as symbols */
 DENSE_GRAPH_INIT(us_item_u8, uint32_t, us_item_t, uint32_t)
@@ -378,9 +392,11 @@ void gen_dfa(
 
   gen_closure(&start_state, &tmp, all_items);
 
-  uint8_t idx = dg_us_item_u8_add_node(dfa, start_state);
+  uint8_t start_index = dg_us_item_u8_add_node(dfa, start_state);
 
-
+  us_usitem_t states;
+  us_usitem_init(&states, 8);
+  us_usitem_insert(&states, &start_state);
   
 
   bool additions;
@@ -407,12 +423,18 @@ void gen_dfa(
         gen_goto(&new_state, curr_state, all_items, symbol);
         //if new state not already a state th
         //then make new one and add an edge from curr state  to new state
-        additions = true;
+        if (!us_usitem_contains(&states, &new_state)) {
+          uint8_t new_index = dg_us_item_u8_add_node(dfa, new_state);
+          uint8_t new_edge_index = dg_us_item_u8_add_edge(dfa, state_itr, new_index, symbol);
+          us_usitem_insert(&states, &new_state);
+          additions = true;
+        }
       }
     }
   } while (additions);
 
   us_item_del(&tmp);
+  us_usitem_del(&states);
 }
 
 void print_production(struct Production *p) {
