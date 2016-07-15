@@ -8,9 +8,6 @@
 #include <ctype.h>
 
 #include "debug.h"
-#include "dense_graph.h"
-#include "unordered_set.h"
-
 
 
 /* We need to keep track of sets of items */
@@ -28,11 +25,10 @@ uint32_t us_item_hash(us_item_t *item_set) {
 }
 
 
-UNORDERED_SET_DECLARE(usitem, static inline, us_item_t*, uint32_t)
 UNORDERED_SET_IMPL(usitem, static, us_item_t*, uint32_t, us_item_hash, us_item_eq)
 
 /* The DFA has nodes of sets of items and edges as symbols */
-DENSE_GRAPH_INIT(us_item_u8, uint32_t, us_item_t, uint32_t)
+DENSE_GRAPH_IMPL(us_item_u8, uint32_t, us_item_t, uint32_t)
 
 
 void gen_table(

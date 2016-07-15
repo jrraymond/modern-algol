@@ -6,7 +6,11 @@
 #include <stdint.h>
 #include <dynamic_array.h>
 #include <unordered_set.h>
+#include <dense_graph.h>
 #include <hash_functions.h>
+
+
+
 
 
 struct TokenPair {
@@ -163,5 +167,9 @@ void gen_goto(
 void print_item(struct Item *item);
   
 
+UNORDERED_SET_DECLARE(usitem, inline, us_item_t*, uint32_t)
+
+
+DENSE_GRAPH_TYPE(us_item_u8, uint32_t, us_item_t, uint32_t)
 
 #endif

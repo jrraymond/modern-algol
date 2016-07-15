@@ -35,6 +35,14 @@ void test_parse_grammar() {
 
 
 
+  struct DenseGraph_us_item_u8_t dfa;
+  dg_us_item_u8_init(&dfa, 64, 64);
+
+  //gen_dfa(&dfa, &items, &start_item);
+
+  dg_us_item_u8_del(&dfa);
+
+
   da_DynArray_del(&productions);
   printf("destructed productions\n");
 
