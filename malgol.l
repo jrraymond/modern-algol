@@ -22,13 +22,27 @@
 "^"       { return MA_TKN_CARROT; }
 "("       { return MA_TKN_LPAREN; }
 ")"       { return MA_TKN_RPAREN; }
+[-+\n]    { return *yytext; }
 
 [ \t]    ; /* skip whitespace */
 .         printf("invalid character: %s\n", yytext);
 
 %%
 
+YYSTYPE yylval;
+
 int yywrap(void)
 {
   return 1;
 }
+
+#if DMAIN
+int main(void)
+{
+  int token;
+  while ((token = yylex()) != 0) {
+    printf("Token: %d (%s)\n", token, yytext);
+  }
+  return EXIT_SUCCESS;
+}
+#endif

@@ -4,6 +4,7 @@
  */
 %{
   #include <math.h>
+  #include <stdlib.h>
   #include <stdio.h>
   #include <stdint.h>
   #include <inttypes.h>
@@ -99,5 +100,6 @@ void yyerror(char const *s)
 
 int main(void)
 {
-  return yyparse();
+  yyparse();
+  return EXIT_SUCCESS;
 }
