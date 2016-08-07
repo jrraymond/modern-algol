@@ -4,7 +4,7 @@
 
 struct maTknStrPair ma_tkn_keywords[] =
   { { MA_TKN_NAT_TYPE, "nat\0"},
-    { MA_TKN_CMD_TYPE, "cmd\0"},
+    { MA_TKN_CMD, "cmd\0"},
     { MA_TKN_SUCC, "S\0"},
     { MA_TKN_ZERO, "Z\0"},
     { MA_TKN_FIX, "fix\0"},
@@ -209,10 +209,7 @@ void ma_print_token(struct maToken t) {
     case MA_TKN_NAT_TYPE:
       printf("nat");
       break;
-    case MA_TKN_ARROW_TYPE:
-      printf("->");
-      break;
-    case MA_TKN_CMD_TYPE:
+    case MA_TKN_CMD:
       printf("cmd");
       break;
     case MA_TKN_VAR:

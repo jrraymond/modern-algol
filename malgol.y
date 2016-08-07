@@ -20,7 +20,6 @@
 %define api.value.type {uint64_t}
 %token MA_TKN_NAT_TYPE    /*types*/
 %token MA_TKN_ARROW_TYPE
-%token MA_TKN_CMD_TYPE
 %token MA_TKN_VAR         /*variables*/
 %token MA_TKN_LBRACKET    /*not stringy tokens*/
 %token MA_TKN_RBRACKET

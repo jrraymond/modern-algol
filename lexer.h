@@ -9,7 +9,6 @@
 
 enum maTokenE {
   MA_TKN_NAT_TYPE,    //types
-  MA_TKN_ARROW_TYPE,
   MA_TKN_CMD_TYPE,
   MA_TKN_VAR,         //variables
   MA_TKN_LBRACKET,    //not stringy tokens
