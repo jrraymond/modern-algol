@@ -10,7 +10,13 @@ OBJS=lexer.o parser.o actiongoto.o
 .c.o: 
 	$(CC) -c $(CFLAGS) $<
 
-malgol: malgol.c $(OBJS) cutils
+frontend: malgol.l malgol.y
+	bison -d malgol.y
+	flex malgol.l
+	$(CC) lex.yy.c malgol.tab.c -lm
+
+
+malgol: malgol.c malgol.l malgol.y cutils
 	$(CC) $(CFLAGS) -o malgol malgol.c $(OBJS) $(LDFLAGS) -lcutils
 
 test: test_actiongoto.c $(OBJS) cutils
@@ -23,5 +29,5 @@ cutils:
 
 .PHONY: clean
 clean:
-	rm -f *.o malgol
+	rm -f *.o malgol *.tab.* lex.yy.c
 	$(MAKE) clean -C $(CUTILS_DIR)

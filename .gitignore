@@ -222,3 +222,7 @@ TSWLatexianTemp*
 
 # KBibTeX
 *~[0-9]*
+
+# flex bison
+lex.yy.c
+*.tab.*

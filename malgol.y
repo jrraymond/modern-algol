@@ -44,10 +44,16 @@
 %token MA_TKN_SUCC
 %token MA_TKN_ZERO
 %token MA_TKN_NAT /* natural numbers and their ops */
-%left '-' '+'
-%left '*' '/' '%'
-%precedence NEG   /* negation--unary minus */
-%right '^'        /* exponentiation */
+%token MA_TKN_PLUS
+%token MA_TKN_DASH
+%token MA_TKN_ASTERISK
+%token MA_TKN_PERCENT
+%token MA_TKN_FWD_SLASH
+%token MA_TKN_CARROT
+
+%left MA_TKN_PLUS MA_TKN_DASH 
+%left MA_TKN_ASTERISK MA_TKN_PERCENT MA_TKN_FWD_SLASH
+%right MA_TKN_CARROT
 
 %%
 
@@ -69,14 +75,14 @@ line:
 ;
 
 exp:
-  MA_TKN_NAT                { $$ = $1;           }
-| exp '+' exp        { $$ = $1 + $3;      }
-| exp '-' exp        { $$ = $1 - $3;      }
-| exp '*' exp        { $$ = $1 * $3;      }
-| exp '/' exp        { $$ = $1 / $3;      }
-| '-' exp  %prec NEG { $$ = -$2;          }
-| exp '^' exp        { $$ = pow_u64($1, $3); }
-| '(' exp ')'        { $$ = $2;           }
+  MA_TKN_NAT                          { $$ = $1;           }
+| exp MA_TKN_PLUS exp                 { $$ = $1 + $3;      }
+| exp MA_TKN_DASH exp                 { $$ = $1 - $3;      }
+| exp MA_TKN_ASTERISK exp             { $$ = $1 * $3;      }
+| exp MA_TKN_FWD_SLASH exp            { $$ = $1 / $3;      }
+| MA_TKN_DASH exp  %prec MA_TKN_DASH  { $$ = -$2;          }
+| exp MA_TKN_CARROT exp               { $$ = pow_u64($1, $3); }
+| MA_TKN_LPAREN exp MA_TKN_RPAREN     { $$ = $2;           }
 ;
 
 %%
@@ -84,29 +90,6 @@ exp:
 uint64_t pow_u64(uint64_t b, uint64_t e)
 {
   return pow(b, e);
-}
-
-int yylex(void)
-{
-  int c;
-
-  /* Skip white space.  */
-  while ((c = getchar ()) == ' ' || c == '\t')
-    continue;
-
-  /* Process numbers.  */
-  if (c == '.' || isdigit (c))
-    {
-      ungetc (c, stdin);
-      scanf ("%" PRIu64, &yylval);
-      return MA_TKN_NAT;
-    }
-
-  /* Return end-of-input.  */
-  if (c == EOF)
-    return 0;
-  /* Return a single char.  */
-  return c;
 }
 
 void yyerror(char const *s)
