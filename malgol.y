@@ -77,7 +77,7 @@ input:
 
 line:
   '\n'
-| exp '\n'  { printf ("\t%" PRIu64 "\n", $1); }
+| exp '\n'  { ma_exp_enum_print($1.tag); }
 ;
 
 typ:
@@ -104,62 +104,31 @@ typ:
 exp:
   MA_TKN_NAT                          
   { 
-    $$ = (struct maExp) {.tag = MA_EXP_NAT, .val = $1};
+    $$ = (struct maExp) {.tag = MA_EXP_NAT, .val.nat = $1};
   }
 | exp MA_TKN_PLUS exp 
   {
-    struct maTuple a;
-    a.fst = malloc(sizeof(maExp))
-    *a.fst = $1;
-    a.snf = malloc(sizeof(maExp))
-    *a.snd = $3;
-    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
-    struct maPrimOp e = {.tag = MA_PO_ADD, .arg = arg};
-    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+    $$ = mk_prim_op(MA_PO_ADD, &$1, &$3);
   }
 | exp MA_TKN_DASH exp 
   {
-    struct maTuple a;
-    a.fst = malloc(sizeof(maExp))
-    *a.fst = $1;
-    a.snf = malloc(sizeof(maExp))
-    *a.snd = $3;
-    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
-    struct maPrimOp e = {.tag = MA_PO_SUB, .arg = arg};
-    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+    $$ = mk_prim_op(MA_PO_SUB, &$1, &$3);
   }
 | exp MA_TKN_ASTERISK exp
   {
-    struct maTuple a;
-    a.fst = malloc(sizeof(maExp))
-    *a.fst = $1;
-    a.snf = malloc(sizeof(maExp))
-    *a.snd = $3;
-    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
-    struct maPrimOp e = {.tag = MA_PO_MUL, .arg = arg};
-    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+    $$ = mk_prim_op(MA_PO_MUL, &$1, &$3);
   }
 | exp MA_TKN_FWD_SLASH exp
   {
-    struct maTuple a;
-    a.fst = malloc(sizeof(maExp))
-    *a.fst = $1;
-    a.snf = malloc(sizeof(maExp))
-    *a.snd = $3;
-    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
-    struct maPrimOp e = {.tag = MA_PO_DIV, .arg = arg};
-    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+    $$ = mk_prim_op(MA_PO_DIV, &$1, &$3);
+  }
+| exp MA_TKN_PERCENT exp
+  {
+    $$ = mk_prim_op(MA_PO_REM, &$1, &$3);
   }
 | exp MA_TKN_CARROT exp 
   {
-    struct maTuple a;
-    a.fst = malloc(sizeof(maExp))
-    *a.fst = $1;
-    a.snf = malloc(sizeof(maExp))
-    *a.snd = $3;
-    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
-    struct maPrimOp e = {.tag = MA_PO_POW, .arg = arg};
-    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+    $$ = mk_prim_op(MA_PO_POW, &$1, &$3);
   }
 | MA_TKN_LPAREN exp MA_TKN_RPAREN 
   {
@@ -169,14 +138,13 @@ exp:
 
 %%
 
+/* creates expression node by moving subexpressions out of arguments */
 struct maExp mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b)
 {
-    struct maTuple t;
-    t.fst = malloc(sizeof(maExp))
-    *t.fst = $1;
-    t.snf = malloc(sizeof(maExp))
-    *t.snd = $3;
-    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = t};
+    struct maTuple t = {.fst = a, .snd = b};
+    struct maExp *arg = malloc(sizeof(struct maExp));
+    arg->tag = MA_EXP_TUPLE;
+    arg->val.tuple = t;
     struct maPrimOp e = {.tag = op, .arg = arg};
     return (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
 }
