@@ -15,7 +15,7 @@
 #include "types.h"
 #include "malgol.tab.h"
 
-void code_gen(struct maExp *e);
+void code_gen(char *name, struct maExp *e);
 
 
 #endif
