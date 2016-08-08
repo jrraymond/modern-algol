@@ -5,16 +5,26 @@
   #include "malgol.tab.h"
 
   void yyerror(char *);
+/* flex generates yylex()
+ *    yylex reads characters from yyin(default=stdin)
+ *    outputs to yyout(default=stdout)
+ *  yywrap() is called at end of file(can open another file and continue parsing)
+ *    if it opens another file, return 0
+ *    to end parsing return 1
+ *  each call to yylex returns an integer value representing a token type
+ *  each token may optionally have a value which is placed in the variable yylval
+ */
 %}
+
 
 %%
 
 [0-9]+  {
-          yylval = atoi(yytext);
-          return MA_TKN_NAT;
+          yylval.num = atoi(yytext);
+          return MA_TKN_NUM;
         }
 
-"nat"                   { return MA_TKN_NAT_TYPE; }    /*types*/
+"nat"                   { return MA_TKN_NUM_TYPE; }    /*types*/
 "{"                     { return MA_TKN_LBRACKET; }    /*not stringy tokens*/
 "}"                     { return MA_TKN_RBRACKET; }
 "("                     { return MA_TKN_LPAREN; }
@@ -42,7 +52,10 @@
 "*"                     { return MA_TKN_ASTERISK; }
 "/"                     { return MA_TKN_FWD_SLASH; }
 "%"                     { return MA_TKN_PERCENT; }
-[[:alpha:]]+([[:alnum:]]|_)*  { return MA_TKN_VAR; }         /*variables*/
+[[:alpha:]]+([[:alnum:]]|_)* {
+    yylval.string = strdup(yytext);
+    return MA_TKN_VAR;
+}
 "^"                     { return MA_TKN_CARROT; }
 \n                      { return *yytext; }
 

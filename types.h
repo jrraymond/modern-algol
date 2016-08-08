@@ -6,7 +6,7 @@ enum ma_exp {
   MA_EXP_VAR,
   MA_EXP_ZERO,
   MA_EXP_SUCC,
-  MA_EXP_NAT,
+  MA_EXP_NUM,
   MA_EXP_FIX,
   MA_EXP_ABS,
   MA_EXP_APP,
@@ -31,7 +31,7 @@ struct maTyp;
 
 /* Types are nats, cmd, or arrow */
 enum ma_type {
-  MA_TYPE_NAT,
+  MA_TYPE_NUM,
   MA_TYPE_ARROW,
   MA_TYPE_CMD
 };
@@ -219,8 +219,8 @@ void ma_exp_enum_print(enum ma_exp e)
     case MA_EXP_SUCC:
       printf("S");
       break;
-    case MA_EXP_NAT:
-      printf("nat");
+    case MA_EXP_NUM:
+      printf("num");
       break;
     case MA_EXP_FIX:
       printf("fix");
