@@ -71,7 +71,7 @@ int yywrap(void)
   return 1;
 }
 
-#if MAIN
+#if LMAIN
 int main(void)
 {
   int token;

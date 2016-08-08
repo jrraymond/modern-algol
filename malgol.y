@@ -186,8 +186,10 @@ void yyerror(char const *s)
   fprintf(stderr, "%s\n", s);
 }
 
+#if PMAIN
 int main(void)
 {
   yyparse();
   return EXIT_SUCCESS;
 }
+#endif
