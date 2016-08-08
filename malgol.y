@@ -8,16 +8,22 @@
   #include <stdio.h>
   #include <stdint.h>
   #include <inttypes.h>
+  
+  #include "types.h"
+
   int yylex(void);
   void yyerror(char const *);
 
   uint64_t pow_u64(uint64_t b, uint64_t e);
+
+  struct maExp mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b);
+
 %}
 
 /* DECLARATIONS
  *
  */
-%define api.value.type {uint64_t}
+%define api.value.type { struct maExp }
 %token MA_TKN_NAT_TYPE    /*types*/
 %token MA_TKN_ARROW_TYPE
 %token MA_TKN_VAR         /*variables*/
@@ -74,18 +80,106 @@ line:
 | exp '\n'  { printf ("\t%" PRIu64 "\n", $1); }
 ;
 
+typ:
+  MA_TKN_NAT_TYPE
+  {
+    struct maTyp t = {.t = MA_TYPE_NAT};
+    struct maExp e = {.tag = MA_EXP_TYP, .val = t};
+    $$ = e;
+  }
+| typ MA_TKN_RIGHTARROW typ
+  { 
+    struct maTyp t = {.t = MA_TYPE_ARROW, .a = &$1, .b = &$3}; /*(malloc???)*/
+    struct maExp e = {.tag = MA_EXP_TYP, .val = t};
+    $$ = e;
+  }
+| MA_TKN_CMD
+  { 
+    struct maTyp t = {.t = MA_TYPE_CMD};
+    struct maExp e = {.tag = MA_EXP_TYP, .val = t};
+    $$ = e;
+  }
+
+/* abstract prim ops to functions */
 exp:
-  MA_TKN_NAT                          { $$ = $1;           }
-| exp MA_TKN_PLUS exp                 { $$ = $1 + $3;      }
-| exp MA_TKN_DASH exp                 { $$ = $1 - $3;      }
-| exp MA_TKN_ASTERISK exp             { $$ = $1 * $3;      }
-| exp MA_TKN_FWD_SLASH exp            { $$ = $1 / $3;      }
-| MA_TKN_DASH exp  %prec MA_TKN_DASH  { $$ = -$2;          }
-| exp MA_TKN_CARROT exp               { $$ = pow_u64($1, $3); }
-| MA_TKN_LPAREN exp MA_TKN_RPAREN     { $$ = $2;           }
+  MA_TKN_NAT                          
+  { 
+    $$ = (struct maExp) {.tag = MA_EXP_NAT, .val = $1};
+  }
+| exp MA_TKN_PLUS exp 
+  {
+    struct maTuple a;
+    a.fst = malloc(sizeof(maExp))
+    *a.fst = $1;
+    a.snf = malloc(sizeof(maExp))
+    *a.snd = $3;
+    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
+    struct maPrimOp e = {.tag = MA_PO_ADD, .arg = arg};
+    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+  }
+| exp MA_TKN_DASH exp 
+  {
+    struct maTuple a;
+    a.fst = malloc(sizeof(maExp))
+    *a.fst = $1;
+    a.snf = malloc(sizeof(maExp))
+    *a.snd = $3;
+    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
+    struct maPrimOp e = {.tag = MA_PO_SUB, .arg = arg};
+    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+  }
+| exp MA_TKN_ASTERISK exp
+  {
+    struct maTuple a;
+    a.fst = malloc(sizeof(maExp))
+    *a.fst = $1;
+    a.snf = malloc(sizeof(maExp))
+    *a.snd = $3;
+    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
+    struct maPrimOp e = {.tag = MA_PO_MUL, .arg = arg};
+    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+  }
+| exp MA_TKN_FWD_SLASH exp
+  {
+    struct maTuple a;
+    a.fst = malloc(sizeof(maExp))
+    *a.fst = $1;
+    a.snf = malloc(sizeof(maExp))
+    *a.snd = $3;
+    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
+    struct maPrimOp e = {.tag = MA_PO_DIV, .arg = arg};
+    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+  }
+| exp MA_TKN_CARROT exp 
+  {
+    struct maTuple a;
+    a.fst = malloc(sizeof(maExp))
+    *a.fst = $1;
+    a.snf = malloc(sizeof(maExp))
+    *a.snd = $3;
+    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = a};
+    struct maPrimOp e = {.tag = MA_PO_POW, .arg = arg};
+    $$ = (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+  }
+| MA_TKN_LPAREN exp MA_TKN_RPAREN 
+  {
+    $$ = $2;
+  }
 ;
 
 %%
+
+struct maExp mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b)
+{
+    struct maTuple t;
+    t.fst = malloc(sizeof(maExp))
+    *t.fst = $1;
+    t.snf = malloc(sizeof(maExp))
+    *t.snd = $3;
+    struct maExp arg = {.tag = MA_EXP_TUPLE, .val.tuple = t};
+    struct maPrimOp e = {.tag = op, .arg = arg};
+    return (struct maExp) {.tag = MA_EXP_PRIM_OP, .val.op = e};
+}
 
 uint64_t pow_u64(uint64_t b, uint64_t e)
 {
