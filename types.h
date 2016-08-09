@@ -29,7 +29,7 @@ struct maExp; //forward declare so we can have mutually recursive structs
 struct maCmd;
 struct maTyp;
 
-/* Types are nats, cmd, or arrow */
+/* Types are nums, cmd, or arrow */
 enum ma_type {
   MA_TYPE_NUM,
   MA_TYPE_ARROW,
@@ -47,7 +47,7 @@ void ma_typ_mv(struct maTyp *to, struct maTyp *from);
 void ma_typ_cp(struct maTyp *to, struct maTyp *from);
 void ma_typ_del(struct maTyp *t);
 
-/* primitive operations on natural numbers */
+/* primitive operations on numbers */
 enum ma_prim_op {
   MA_PO_ADD,
   MA_PO_SUB,
@@ -132,7 +132,7 @@ void ma_tuple_del(struct maTuple *a);
 struct maExp {
   enum ma_exp tag;
   union {
-    unsigned int nat;
+    unsigned int num;
     unsigned int var; //debruijn indexes
     struct maExp* e0; //successor, need a better name for this
     struct maFix fix; //three children rec

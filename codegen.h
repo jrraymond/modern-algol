@@ -31,5 +31,7 @@ LLVMValueRef cgen_tuple(LLVMBuilderRef b, struct maTuple *t);
 
 LLVMValueRef cgen_prim_op(LLVMBuilderRef b, struct maPrimOp *op, struct Array_lvr *vals);
 
+LLVMValueRef cgen_num(LLVMBuilderRef b, unsigned int num);
+
 LLVMValueRef lvr_get(struct Array_lvr *vals, char *name) ;
 #endif

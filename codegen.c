@@ -25,6 +25,12 @@ void code_gen(char *name, struct maExp *e)
 
   mk_pow(mod, &vals);
 
+  LLVMBuilderRef builder = LLVMCreateBuilder(); /*in context???*/
+
+  LLVMValueRef v = cgen_exp(builder, e, &vals);
+
+  /* cleanup */
+  LLVMDisposeBuilder(builder);
   array_lvr_del(&vals);
 }
 
@@ -56,10 +62,17 @@ LLVMValueRef cgen_prim_op(LLVMBuilderRef b, struct maPrimOp *op, struct Array_lv
     case MA_PO_REM:
       return LLVMBuildSRem(b, args[0], args[1], "rem");
     case MA_PO_POW:;
-      //TODO cast from integer to fp
+      printf("pow unimplemented\n");
+      args[0] = LLVMBuildSIToFP(b, args[0], LLVMInt32Type(), "si2fp");
+      args[1] = LLVMBuildSIToFP(b, args[1], LLVMInt32Type(), "si2fp");
       LLVMValueRef pow = lvr_get(vals, "llvm.pow.f64");
       return LLVMBuildCall(b, pow, args, 2, "pow");
   }
+}
+
+LLVMValueRef cgen_num(LLVMBuilderRef b, unsigned int num)
+{
+  return LLVMConstInt(LLVMInt32Type(), num, false);
 }
 
 LLVMValueRef cgen_exp(LLVMBuilderRef b, struct maExp *e, struct Array_lvr *vals)
@@ -67,6 +80,8 @@ LLVMValueRef cgen_exp(LLVMBuilderRef b, struct maExp *e, struct Array_lvr *vals)
   switch (e->tag) {
     case MA_EXP_PRIM_OP:
       return cgen_prim_op(b, &e->val.op, vals);
+    case MA_EXP_NUM:
+      return cgen_num(b, e->val.num);
     default:
       printf("UNIMPLIMENTED\n");
       exit(1);
