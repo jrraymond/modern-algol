@@ -18,6 +18,8 @@
   int64_t pow_u64(int64_t b, int64_t e); 
   struct maExp *mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b);
 
+  struct maExp *ast_res;
+
 %}
 
 /* DECLARATIONS
@@ -71,8 +73,7 @@
 %left MA_TKN_ASTERISK MA_TKN_PERCENT MA_TKN_FWD_SLASH
 %right MA_TKN_CARROT
 
-
-%type <exp> exp;
+%type <exp> exp input line;
 %type <cmd> cmd;
 %type <typ> typ;
 
@@ -85,15 +86,14 @@
  * recognized. most actions compute a semantic value for the group built from
  * the semantic values associated with tokens or smaller groupings.
  */
+
+start: input { ast_res = $1; }
+  
 input:
-  %empty
-| input line
+  %empty { $$ = NULL; }
+| exp { $$ = $1; }
 ;
 
-line:
-  '\n'
-| exp '\n'  { ma_exp_enum_print($1->tag); }
-;
 /*
 typ:
   MA_TKN_NUM_TYPE

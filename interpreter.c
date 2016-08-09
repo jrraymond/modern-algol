@@ -3,9 +3,7 @@
 
 #include "codegen.h"
 
-extern int YY_BUFFER_STATE;
-int yylex(void);
-YY_BUFFER_STATE yy_scan_string(const char *);
+extern maExp *ast_res;
 
 CUTILS_ARRAY(char, static inline, char)
 
@@ -28,18 +26,23 @@ void driver(void)
   struct Array_lvr vals;
   array_lvr_init(&vals, 64);
 
-  /* set flex to read from buffer instead of stdin */
-
   LLVMModuleRef mod = LLVMModuleCreateWithName("jit");
 
   mk_pow(mod, &vals);
 
   LLVMBuilderRef builder = LLVMCreateBuilder(); /*in context???*/
 
-  while (read_until(&buffer, ';')) {
+  while (read_until(&buffer, '\n')) {
+    array_char_append(&buffer, '\n');
     array_char_append(&buffer, '\0');
+
     yy_scan_string(buffer.elems);
     yyparse();
+    yy_lex_destroy();
+
+    LLVMValueRef v = cgen_exp(builder, ast_res, &vals);
+
+
 
     array_char_clear(&buffer);
   }
