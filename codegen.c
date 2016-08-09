@@ -16,7 +16,7 @@ LLVMValueRef lvr_get(struct Array_lvr *vals, char *name)
   exit(1);
 }
 
-void code_gen(char *name, struct maExp *e)
+void main_driver(char *name, struct maExp *e)
 {
   struct Array_lvr vals;
   array_lvr_init(&vals, 64);

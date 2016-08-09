@@ -15,8 +15,7 @@
   int yylex(void);
   void yyerror(char const *);
 
-  int64_t pow_u64(int64_t b, int64_t e);
-
+  int64_t pow_u64(int64_t b, int64_t e); 
   struct maExp *mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b);
 
 %}
