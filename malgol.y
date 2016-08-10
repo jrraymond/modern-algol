@@ -3,7 +3,6 @@
  * are used in the actions in the grammar rules.
  */
 %{
-  #include <math.h>
   #include <stdlib.h>
   #include <stdio.h>
   #include <stdint.h>
@@ -15,7 +14,6 @@
   int yylex(void);
   void yyerror(char const *);
 
-  int64_t pow_u64(int64_t b, int64_t e); 
   struct maExp *mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b);
 
   struct maExp *ast_res;
@@ -61,20 +59,21 @@
 %token <exp> MA_TKN_AT
 %token <exp> MA_TKN_SUCC
 %token <exp> MA_TKN_ZERO
-%token <num> MA_TKN_NUM /* natural numbers and their ops */
-/*%token MA_TKN_NUM /* natural numbers and their ops */
+%token <num> MA_TKN_NUM /*  numbers and their ops */
+/*%token MA_TKN_NUM /* numbers and their ops */
 %token <exp> MA_TKN_PLUS
 %token <exp> MA_TKN_DASH
 %token <exp> MA_TKN_ASTERISK
 %token <exp> MA_TKN_PERCENT
 %token <exp> MA_TKN_FWD_SLASH
 %token <exp> MA_TKN_CARROT
+%token <exp> MA_TKN_EOI /*for interpreter, to signal end of inp*/
 
 %left MA_TKN_PLUS MA_TKN_DASH 
 %left MA_TKN_ASTERISK MA_TKN_PERCENT MA_TKN_FWD_SLASH
 %right MA_TKN_CARROT
 
-%type <exp> exp input line;
+%type <exp> exp input;
 %type <cmd> cmd;
 %type <typ> typ;
 
@@ -88,12 +87,18 @@
  * the semantic values associated with tokens or smaller groupings.
  */
 
-start: input { ast_res = $1; }
-  
+start: input {
+     ast_res = $1;
+}
+
 input:
   %empty { $$ = NULL; }
-| exp { $$ = $1; }
-;
+| input exp MA_TKN_EOI { 
+     #if PMAIN
+        ma_exp_enum_print($2->tag);
+     #endif
+    $$ = $2;
+  }
 
 /*
 typ:
@@ -123,7 +128,7 @@ exp:
   { 
     struct maExp *e = malloc(sizeof(struct maExp));
     e->tag = MA_EXP_NUM;
-    e->val.nat = $1;
+    e->val.num = $1;
     $$ = e;
   }
 | exp MA_TKN_PLUS exp 
@@ -176,22 +181,10 @@ struct maExp *mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b)
     return e;
 }
 
-int64_t pow_u64(int64_t b, int64_t e)
-{
-  return pow(b, e);
-}
 
 void yyerror(char const *s)
 {
   fprintf(stderr, "%s\n", s);
-}
-
-void parse(char *buffer, struct maExp **e)
-{
-  yy_scan_string(buffer);
-  yyparse();
-  yy_lex_destroy();
-  *e = ast_res;
 }
 
 #if PMAIN

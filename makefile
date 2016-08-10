@@ -3,7 +3,7 @@ BUILD=build
 CC=gcc
 CUTILS_DIR := $(CURDIR)/cutils
 LDFLAGS := -L$(CUTILS_DIR)
-CFLAGS=-I$(IDIR) -I$(CUTILS_DIR) -Wall -std=c99 -g -DDEBUG=1 -Wno-missing-braces
+CFLAGS=-I$(IDIR) -I$(CUTILS_DIR) -Wall -std=gnu99 -g -DDEBUG=1 -Wno-missing-braces
 
 
 OBJS=lexer.o parser.o actiongoto.o
@@ -13,7 +13,13 @@ OBJS=lexer.o parser.o actiongoto.o
 frontend: malgol.l malgol.y
 	bison -d malgol.y
 	flex malgol.l
-	$(CC) lex.yy.c malgol.tab.c -lm
+	$(CC) $(CFLAGS) lex.yy.c malgol.tab.c -DPMAIN
+
+interpreter: frontend
+	$(CC) $(CFLAGS) lex.yy.c malgol.tab.c interpreter.c
+
+jit: frontend
+	$(CC) $(CFLAGS) lex.yy.c malgol.tab.c interpreter.c -DJIT
 
 
 malgol: malgol.c malgol.l malgol.y cutils
