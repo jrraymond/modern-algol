@@ -23,7 +23,7 @@ CUTILS_ARRAY(lvr, static inline, LLVMValueRef)
 
 void code_gen(char *name, struct maExp *e);
 
-void mk_pow(LLVMModuleRef m, struct Array_lvr *functions);
+void mk_pow(LLVMModuleRef m, struct Array_lvr *vals);
 
 LLVMValueRef cgen_exp(LLVMBuilderRef b, struct maExp *e, struct Array_lvr *vals);
 

@@ -73,7 +73,7 @@
 
 %%
 
-YYSTYPE yylval;
+/*YYSTYPE yylval;*/
 
 int yywrap(void)
 {

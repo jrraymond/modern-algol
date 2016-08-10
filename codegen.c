@@ -1,5 +1,8 @@
 #include "codegen.h"
 
+
+static char POW_F64_NAME[] = "llvm.pow.f64";
+
 LLVMValueRef lvr_get(struct Array_lvr *vals, char *name)
 {
   const char *v_name;
@@ -38,7 +41,7 @@ void mk_pow(LLVMModuleRef m, struct Array_lvr *vals)
 {
   LLVMTypeRef param_types[] = { LLVMDoubleType() };
   LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 2, false);
-  LLVMValueRef fn = LLVMAddFunction(m, "llvm.pow.f64", fn_type);
+  LLVMValueRef fn = LLVMAddFunction(m, POW_F64_NAME, fn_type);
   array_lvr_append(vals, fn);
 }
 
@@ -62,12 +65,12 @@ LLVMValueRef cgen_prim_op(LLVMBuilderRef b, struct maPrimOp *op, struct Array_lv
     case MA_PO_REM:
       return LLVMBuildSRem(b, args[0], args[1], "rem");
     case MA_PO_POW:;
-      printf("pow unimplemented\n");
       args[0] = LLVMBuildSIToFP(b, args[0], LLVMInt32Type(), "si2fp");
       args[1] = LLVMBuildSIToFP(b, args[1], LLVMInt32Type(), "si2fp");
-      LLVMValueRef pow = lvr_get(vals, "llvm.pow.f64");
+      LLVMValueRef pow = lvr_get(vals, POW_F64_NAME);
       return LLVMBuildCall(b, pow, args, 2, "pow");
   }
+  return NULL;
 }
 
 LLVMValueRef cgen_num(LLVMBuilderRef b, unsigned int num)

@@ -226,3 +226,6 @@ TSWLatexianTemp*
 # flex bison
 lex.yy.c
 *.tab.*
+
+jit
+test

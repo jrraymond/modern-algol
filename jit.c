@@ -6,7 +6,6 @@
 
 CUTILS_ARRAY(char, static inline, char)
 
-extern void parse(char *, struct maExp **);
 
 bool read_until(struct Array_char *buffer, char delim)
 {
@@ -57,7 +56,8 @@ void driver(void)
     LLVMDisposeMessage(error);
     exit(EXIT_FAILURE);
   }
-
+  yyparse();
+/*
   while (read_until(&buffer, '\n')) {
     array_char_append(&buffer, '\n');
     array_char_append(&buffer, '\0');
@@ -68,6 +68,7 @@ void driver(void)
 
     array_char_clear(&buffer);
   }
+  */
 
   //LLVMValueRef v = cgen_exp(builder, e, &vals);
 
