@@ -2,10 +2,11 @@
 #include <stdio.h>
 
 #include "codegen.h"
-
-extern maExp *ast_res;
+#include "malgol.tab.h"
 
 CUTILS_ARRAY(char, static inline, char)
+
+extern void parse(char *, struct maExp **);
 
 bool read_until(struct Array_char *buffer, char delim)
 {
@@ -21,6 +22,7 @@ bool read_until(struct Array_char *buffer, char delim)
 
 void driver(void)
 {
+  struct maExp *exp;
   struct Array_char buffer;
   array_char_init(&buffer, 256);
   struct Array_lvr vals;
@@ -32,17 +34,37 @@ void driver(void)
 
   LLVMBuilderRef builder = LLVMCreateBuilder(); /*in context???*/
 
+  char *error = NULL;
+  LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
+  LLVMDisposeMessage(error);
+
+  LLVMExecutionEngineRef eng;
+  error = NULL;
+
+#if JIT
+  LLVMLinkInMCJIT();
+#else
+  LLVMLinkInInterpreter();
+#endif
+
+  LLVMInitializeNativeTarget();
+  if (!LLVMCreateExecutionEngineForModule(&eng, mod, &error)) {
+    printf("Failed to create execution engine");
+    abort();
+  }
+  if (error) {
+    printf("ERROR: %s\n", error);
+    LLVMDisposeMessage(error);
+    exit(EXIT_FAILURE);
+  }
+
   while (read_until(&buffer, '\n')) {
     array_char_append(&buffer, '\n');
     array_char_append(&buffer, '\0');
 
-    yy_scan_string(buffer.elems);
-    yyparse();
-    yy_lex_destroy();
+    parse(buffer.elems, &exp);
 
-    LLVMValueRef v = cgen_exp(builder, ast_res, &vals);
-
-
+    LLVMValueRef v = cgen_exp(builder, exp, &vals);
 
     array_char_clear(&buffer);
   }
@@ -51,6 +73,7 @@ void driver(void)
 
   /* cleanup */
   LLVMDisposeBuilder(builder);
+  LLVMDisposeExecutionEngine(eng);
   array_lvr_del(&vals);
   array_char_del(&buffer);
 }

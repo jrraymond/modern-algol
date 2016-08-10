@@ -19,6 +19,7 @@
   struct maExp *mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b);
 
   struct maExp *ast_res;
+  void parse(char *buffer, struct maExp **e);
 
 %}
 
@@ -183,6 +184,14 @@ int64_t pow_u64(int64_t b, int64_t e)
 void yyerror(char const *s)
 {
   fprintf(stderr, "%s\n", s);
+}
+
+void parse(char *buffer, struct maExp **e)
+{
+  yy_scan_string(buffer);
+  yyparse();
+  yy_lex_destroy();
+  *e = ast_res;
 }
 
 #if PMAIN
