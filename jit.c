@@ -11,23 +11,12 @@ extern struct maExp* ast_res;
 extern int yydebug;
 #endif
 
-bool read_until(struct Array_char *buffer, char delim)
-{
-  while (true) {
-    char c = getc(stdin);
-    if (c == EOF)
-      return false;
-    if (c == delim)
-      return true;
-    array_char_append(buffer, c);
-  }
-}
-
 void driver(void)
 {
 #if YYDEBUG
   yydebug=1;
 #endif
+  bool dump_bitcode = true;
   struct maExp *exp;
   struct Array_char buffer;
   array_char_init(&buffer, 256);
@@ -87,6 +76,9 @@ void driver(void)
 
     LLVMGenericValueRef res = LLVMRunFunction(eng, fun, 0, NULL);
     printf("%d\n", (int)LLVMGenericValueToInt(res, 0));
+
+    if (dump_bitcode && LLVMWriteBitcodeToFile(mod, "interpreter.bc") != 0)
+        printf("ERROR: failed to write bitcode to file");
 
     LLVMDisposeBuilder(builder);
   }
