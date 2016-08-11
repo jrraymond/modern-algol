@@ -42,11 +42,12 @@ void ma_exp_enum_print(enum ma_exp e)
 
 void ma_typ_init(struct maTyp *t) {}
 void ma_typ_mv(struct maTyp *to, struct maTyp *from) {}
+
 void ma_typ_cp(struct maTyp *to, struct maTyp *from) {}
 void ma_typ_del(struct maTyp *t)
 {
-  switch (t->t) {
-    case MA_TYPE_ARROW:
+  switch (t->tag) {
+    case MA_TYP_ARROW:
       ma_typ_del(t->a);
       free(t->a);
       ma_typ_del(t->b);
@@ -91,6 +92,7 @@ void ma_fix_del(struct maFix *a)
   ma_exp_del(a->body);
   free(a->body);
   ma_typ_del(&a->typ);
+  free(a->var.name);
 }
 
 
@@ -102,6 +104,7 @@ void ma_abs_del(struct maAbs *a)
   ma_typ_del(&a->typ);
   ma_exp_del(a->body);
   free(a->body);
+  free(a->var.name);
 }
 
 void ma_tuple_init(struct maTuple *a) {}
@@ -140,14 +143,18 @@ void ma_exp_del(struct maExp *a)
       break;
     case MA_EXP_APP:
       ma_app_del(&a->val.app);
+      break;
     case MA_EXP_CMD:
       ma_cmd_del(&a->val.cmd);
+      break;
     case MA_EXP_TUPLE:
       ma_tuple_del(&a->val.tuple);
       break;
     case MA_EXP_PRIM_OP:
       ma_po_del(&a->val.op);
       break;
+    case MA_EXP_VAR:
+      free(a->val.var.name);
     default:
       break;
   }
@@ -163,6 +170,7 @@ void ma_bind_del(struct maBind *a)
   free(a->exp);
   ma_cmd_del(a->cmd);
   free(a->cmd);
+  free(a->var.name);
 }
 
 

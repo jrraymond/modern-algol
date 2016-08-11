@@ -33,7 +33,7 @@
           return MA_TKN_NUM;
         }
 
-"nat"                   { return MA_TKN_NUM_TYPE; }    /*types*/
+"num"                   { return MA_TKN_NUM_TYP; }    /*types*/
 "{"                     { return MA_TKN_LBRACKET; }    /*not stringy tokens*/
 "}"                     { return MA_TKN_RBRACKET; }
 "("                     { return MA_TKN_LPAREN; }
@@ -50,7 +50,6 @@
 "cmd"                   { return MA_TKN_CMD; }
 "ret"                   { return MA_TKN_RET; }
 "bnd"                   { return MA_TKN_BND; }
-"in"                    { return MA_TKN_IN; }
 "is"                    { return MA_TKN_IS; }
 "dcl"                   { return MA_TKN_DCL; }
 "@"                     { return MA_TKN_AT; }

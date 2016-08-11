@@ -33,8 +33,8 @@
   struct maCmd *cmd;
 }
 
-%token <exp> MA_TKN_NUM_TYPE    /*types*/
-%token <exp> MA_TKN_ARROW_TYPE
+%token <exp> MA_TKN_NUM_TYP    /*types*/
+%token <exp> MA_TKN_ARROW_TYP
 %token <string> MA_TKN_VAR         /*variables*/
 /*%token MA_TKN_VAR         /*variables*/
 %token <exp> MA_TKN_LBRACKET    /*not stringy tokens*/
@@ -53,7 +53,6 @@
 %token <exp> MA_TKN_CMD
 %token <exp> MA_TKN_RET
 %token <exp> MA_TKN_BND
-%token <exp> MA_TKN_IN
 %token <exp> MA_TKN_IS
 %token <exp> MA_TKN_DCL
 %token <exp> MA_TKN_AT
@@ -95,27 +94,65 @@ input: exp MA_TKN_EOI {
 
 
 typ:
-  MA_TKN_NUM_TYPE
+  MA_TKN_NUM_TYP
   {
-    struct maTyp t = {.t = MA_TYPE_NUM};
-    struct maExp e = {.tag = MA_EXP_TYP, .val = t};
-    $$ = e;
+    struct maTyp *t = malloc(sizeof(struct maTyp));
+    t->tag = MA_TYP_NUM;
+    $$ = t;
   }
 | typ MA_TKN_RIGHTARROW typ
   { 
-    struct maTyp t = {.t = MA_TYPE_ARROW, .a = &$1, .b = &$3}; todo malloc
-    struct maExp e = {.tag = MA_EXP_TYP, .val = t};
-    $$ = e;
+    struct maTyp *t = malloc(sizeof(struct maTyp));
+    t->tag = MA_TYP_ARROW;
+    t->a = $1;
+    t->b = $3;
+    $$ = t;
   }
 | MA_TKN_CMD
   { 
-    struct maTyp t = {.t = MA_TYPE_CMD};
-    struct maExp e = {.tag = MA_EXP_TYP, .val = t};
-    $$ = e;
+    struct maTyp *t = malloc(sizeof(struct maTyp));
+    t->tag = MA_TYP_CMD;
+    $$ = t;
+  }
+
+cmd:
+  MA_TKN_RET exp
+  {
+    struct maCmd *c = malloc(sizeof(struct maCmd));
+    c->tag = MA_CMD_RET;
+    c->ret = $2;
+    $$ = c;
+  }
+| MA_TKN_BND MA_TKN_VAR MA_TKN_LEFTARROW exp MA_TKN_COLON cmd
+  {
+    struct maCmd *c = malloc(sizeof(struct maCmd));
+    c->tag = MA_CMD_BND;
+    c->val.bind = (struct maBind) {.var.name = $2, .exp = $4, .cmd = $6};
+    $$ = c;
+  }
+| MA_TKN_DCL MA_TKN_VAR MA_TKN_ASSIGN exp MA_TKN_DOT cmd
+  {
+    struct maCmd *c = malloc(sizeof(struct maCmd));
+    c->tag = MA_CMD_DCL;
+    c->val.dcl = (struct maDcl) {.var.name = $2, .exp = $4, .cmd = $6};
+    $$ = c;
+  }
+| MA_TKN_AT MA_TKN_VAR
+  {
+    struct maCmd *c = malloc(sizeof(struct maCmd));
+    t->tag = MA_CMD_FETCH;
+    t->val.at.name = $2;
+    $$ = c;
+  }
+| MA_TKN_VAR MA_TKN_ASSIGN exp
+  {
+    struct maCmd *c = malloc(sizeof(struct maCmd));
+    c->tag = MA_CMD_ASSIGN;
+    c->val.assign = (struct maAssign) {.var.name = $1, .exp = $3};
+    $$ = c;
   }
 
 
-/* abstract prim ops to functions */
 exp:
   MA_TKN_NUM                          
   { 
@@ -176,8 +213,31 @@ exp:
   {
     struct maExp *e = malloc(sizeof(struct maExp));
     e->tag = MA_EXP_ABS;
-    e->val.abs = (struct maAbs) {.var.name = $2, .typ = $4, .body = $6};
+    e->val.abs = (struct maAbs) {.var.name = $2, .typ = *$4, .body = $6};
+    free($4);
     $$ = e;
+  }
+| MA_TKN_FIX MA_TKN_VAR MA_TKN_COLON typ MA_TKN_DOT exp
+  {
+    struct maExp *e = malloc(sizeof(struct maExp));
+    e->tag = MA_EXP_FIX;
+    e->val.fix = (struct maFix) {.var.name = $2, .typ = *$4,  .body = $6};
+    free($4);
+    $$ = e;
+  }
+| exp exp
+  {
+    struct maExp *e = malloc(sizeof(struct maExp));
+    e->tag = MA_EXP_APP;
+    e->val.app = (struct maApp) {.fun = $1, .arg = $2};
+    $$ = e;
+  }
+| MA_TYP_CMD cmd
+  {
+    struct maExp *e = malloc(sizeof(struct maExp));
+    e->tag = MA_EXP_CMD;
+    e->val.cmd = *$2;
+    free($2);
   }
     
     

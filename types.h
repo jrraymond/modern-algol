@@ -33,21 +33,21 @@ enum ma_cmd {
 union maVar {
   int db;
   char* name;
-}
+};
 
 struct maExp; //forward declare so we can have mutually recursive structs
 struct maTyp;
 
 /* Types are nums, cmd, or arrow */
-enum ma_type {
-  MA_TYPE_NUM,
-  MA_TYPE_ARROW,
-  MA_TYPE_CMD
+enum ma_typ {
+  MA_TYP_NUM,
+  MA_TYP_ARROW,
+  MA_TYP_CMD
 };
 
-/* only MA_TYPE_ARROW has recursive typ */
+/* only MA_TYP_ARROW has recursive typ */
 struct maTyp {
-  enum ma_type t;
+  enum ma_typ tag;
   struct maTyp *a;
   struct maTyp *b;
 };
@@ -146,7 +146,7 @@ void ma_bind_cp(struct maBind *to, struct maBind *from);
 void ma_bind_del(struct maBind *a);
 
 struct maDcl {
-  unsigned int ass; 
+  union maVar var;
   struct maExp *exp;
   struct maCmd *cmd;
 };
@@ -158,7 +158,7 @@ void ma_dcl_del(struct maDcl *a);
 
 
 struct maAssign {
-  unsigned int ass;
+  union maVar var;
   struct maExp *exp;
 };
 
@@ -173,7 +173,7 @@ struct maCmd {
     struct maExp *ret; //return
     struct maBind bnd; //sequence
     struct maDcl dcl; //new assignable
-    unsigned int at; //fetch
+    union maVar at; //fetch
     struct maAssign assign; //assign
   } val;
 };
