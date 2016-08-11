@@ -39,7 +39,7 @@ void main_driver(char *name, struct maExp *e)
 
 void mk_pow(LLVMModuleRef m, struct Array_lvr *vals)
 {
-  LLVMTypeRef param_types[] = { LLVMDoubleType() };
+  LLVMTypeRef param_types[] = { LLVMDoubleType(), LLVMDoubleType() };
   LLVMTypeRef fn_type = LLVMFunctionType(LLVMDoubleType(), param_types, 2, false);
   LLVMValueRef fn = LLVMAddFunction(m, POW_F64_NAME, fn_type);
   array_lvr_append(vals, fn);

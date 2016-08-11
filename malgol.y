@@ -7,9 +7,9 @@
   #include <stdio.h>
   #include <stdint.h>
   #include <inttypes.h>
+  #include <stdbool.h>
   
   #include "types.h"
-
 
   int yylex(void);
   void yyerror(char const *);
@@ -17,13 +17,13 @@
   struct maExp *mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b);
 
   struct maExp *ast_res;
-  void parse(char *buffer, struct maExp **e);
 
 %}
 
 /* DECLARATIONS
  *
  */
+%define parse.error verbose
 
 %union {
   int64_t num;
@@ -73,7 +73,7 @@
 %left MA_TKN_ASTERISK MA_TKN_PERCENT MA_TKN_FWD_SLASH
 %right MA_TKN_CARROT
 
-%type <exp> exp input;
+%type <exp> exp;
 %type <cmd> cmd;
 %type <typ> typ;
 
@@ -87,18 +87,10 @@
  * the semantic values associated with tokens or smaller groupings.
  */
 
-start: input {
+input: exp MA_TKN_EOI {
      ast_res = $1;
+     return 0;
 }
-
-input:
-  %empty { $$ = NULL; }
-| input exp MA_TKN_EOI { 
-     #if PMAIN
-        ma_exp_enum_print($2->tag);
-     #endif
-    $$ = $2;
-  }
 
 /*
 typ:
@@ -190,7 +182,14 @@ void yyerror(char const *s)
 #if PMAIN
 int main(void)
 {
-  yyparse();
+  #if YYDEBUG
+    yydebug=1;
+  #endif
+  while (true) {
+    yyparse();
+    if (ast_res)
+      ma_exp_enum_print(ast_res->tag);
+  }
   return EXIT_SUCCESS;
 }
 #endif

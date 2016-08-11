@@ -1,9 +1,9 @@
 IDIR=$(CURDIR)
 BUILD=build
-CC=gcc
+CC=clang
 CUTILS_DIR := $(CURDIR)/cutils
 LDFLAGS := -L$(CUTILS_DIR)
-CFLAGS=-I$(IDIR) -I$(CUTILS_DIR) -Wall -std=gnu99 -g -DDEBUG=1 -Wno-missing-braces
+override CFLAGS += -I$(IDIR) -I$(CUTILS_DIR) -Wall -std=gnu99 -g -DDEBUG=1 -Wno-missing-braces
 LLVM_CFLAGS=`llvm-config --cflags`
 LLVM_LDFLAGS=`llvm-config --cxxflags --ldflags --libs core executionengine mcjit interpreter analysis native bitwriter --system-libs`
 
@@ -15,7 +15,7 @@ OBJS=lexer.o parser.o actiongoto.o
 frontend: malgol.l malgol.y
 	bison -d malgol.y
 	flex malgol.l
-	$(CC) $(CFLAGS) lex.yy.c malgol.tab.c types.c -DPMAIN
+	$(CC) $(CFLAGS) -o parser lex.yy.c malgol.tab.c types.c -DPMAIN
 
 interpreter: frontend
 	$(CC) $(CFLAGS) lex.yy.c malgol.tab.c types.c interpreter.c
@@ -28,7 +28,7 @@ jit.o: frontend
 jit: jit.o $(JIT_OBJS)
 	$(CC) -c $(CFLAGS) lex.yy.c
 	$(CC) -c $(CFLAGS) malgol.tab.c
-	g++ $< $(LLVM_LDFLAGS) -o $@ $(JIT_OBJS) lex.yy.o malgol.tab.o
+	clang++ $< $(LLVM_LDFLAGS) -o $@ $(JIT_OBJS) lex.yy.o malgol.tab.o
 
 malgol: malgol.c malgol.l malgol.y cutils
 	$(CC) $(CFLAGS) -o malgol malgol.c $(OBJS) $(LDFLAGS) -lcutils

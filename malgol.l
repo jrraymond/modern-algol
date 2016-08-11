@@ -67,8 +67,9 @@
 }
 "^"                     { return MA_TKN_CARROT; }
 ";;"                      { return MA_TKN_EOI; }
+<<EOF>>   { return MA_TKN_EOI; }
 
-[ \t]    ; /* skip whitespace */
+[ \t\n]    ; /* skip whitespace */
 .         printf("invalid character: %s\n", yytext);
 
 %%

@@ -6,6 +6,10 @@
 
 CUTILS_ARRAY(char, static inline, char)
 
+extern struct maExp* ast_res;
+#if YYDEBUG
+extern int yydebug;
+#endif
 
 bool read_until(struct Array_char *buffer, char delim)
 {
@@ -21,6 +25,9 @@ bool read_until(struct Array_char *buffer, char delim)
 
 void driver(void)
 {
+#if YYDEBUG
+  yydebug=1;
+#endif
   struct maExp *exp;
   struct Array_char buffer;
   array_char_init(&buffer, 256);
@@ -47,7 +54,7 @@ void driver(void)
 #endif
 
   LLVMInitializeNativeTarget();
-  if (!LLVMCreateExecutionEngineForModule(&eng, mod, &error)) {
+  if (LLVMCreateExecutionEngineForModule(&eng, mod, &error) != 0) {
     printf("Failed to create execution engine");
     abort();
   }
@@ -56,21 +63,21 @@ void driver(void)
     LLVMDisposeMessage(error);
     exit(EXIT_FAILURE);
   }
-  yyparse();
-/*
-  while (read_until(&buffer, '\n')) {
-    array_char_append(&buffer, '\n');
-    array_char_append(&buffer, '\0');
 
-    parse(buffer.elems, &exp);
+  while (true) {
+    printf(">>>");
+    switch (yyparse()) {
+      case 1:
+        printf("ERROR: invalid input\n");
+        continue;
+      case 2:
+        printf("ERROR: memory exhaustion\n");
+        continue;
+    }
 
-    LLVMValueRef v = cgen_exp(builder, exp, &vals);
 
-    array_char_clear(&buffer);
+    LLVMValueRef v = cgen_exp(builder, ast_res, &vals);
   }
-  */
-
-  //LLVMValueRef v = cgen_exp(builder, e, &vals);
 
   /* cleanup */
   LLVMDisposeBuilder(builder);
