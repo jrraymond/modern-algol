@@ -38,7 +38,6 @@ void driver(void)
 
   mk_pow(mod, &vals);
 
-  LLVMBuilderRef builder = LLVMCreateBuilder(); /*in context???*/
 
   char *error = NULL;
   LLVMVerifyModule(mod, LLVMAbortProcessAction, &error);
@@ -54,6 +53,7 @@ void driver(void)
 #endif
 
   LLVMInitializeNativeTarget();
+
   if (LLVMCreateExecutionEngineForModule(&eng, mod, &error) != 0) {
     printf("Failed to create execution engine");
     abort();
@@ -64,7 +64,7 @@ void driver(void)
     exit(EXIT_FAILURE);
   }
 
-  while (true) {
+  for (uint32_t line_no=0;;++line_no) {
     printf(">>>");
     switch (yyparse()) {
       case 1:
@@ -74,13 +74,24 @@ void driver(void)
         printf("ERROR: memory exhaustion\n");
         continue;
     }
+    char fun_name[64];
+    sprintf(fun_name, "l%u", line_no);
 
+    LLVMValueRef fun = LLVMAddFunction(mod, fun_name, LLVMFunctionType(LLVMInt32Type(), NULL, 0, 0));
+    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(fun, "entry");
+    LLVMBuilderRef builder = LLVMCreateBuilder();
+    LLVMPositionBuilderAtEnd(builder, entry);
 
     LLVMValueRef v = cgen_exp(builder, ast_res, &vals);
+    LLVMBuildRet(builder, v);
+
+    LLVMGenericValueRef res = LLVMRunFunction(eng, fun, 0, NULL);
+    printf("%d\n", (int)LLVMGenericValueToInt(res, 0));
+
+    LLVMDisposeBuilder(builder);
   }
 
   /* cleanup */
-  LLVMDisposeBuilder(builder);
   LLVMDisposeExecutionEngine(eng);
   array_lvr_del(&vals);
   array_char_del(&buffer);
