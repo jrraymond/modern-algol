@@ -76,6 +76,7 @@
 %type <exp> exp;
 %type <cmd> cmd;
 %type <typ> typ;
+%type <string> var;
 
 %%
 
@@ -92,7 +93,7 @@ input: exp MA_TKN_EOI {
      return 0;
 }
 
-/*
+
 typ:
   MA_TKN_NUM_TYPE
   {
@@ -112,7 +113,7 @@ typ:
     struct maExp e = {.tag = MA_EXP_TYP, .val = t};
     $$ = e;
   }
-*/
+
 
 /* abstract prim ops to functions */
 exp:
@@ -151,6 +152,35 @@ exp:
   {
     $$ = $2;
   }
+| MA_TKN_VAR
+  {
+    struct maExp *e = malloc(sizeof(struct maExp));
+    e->tag = MA_EXP_VAR;
+    e->val.var.name = $1;
+    $$ = e;
+  }
+| MA_TKN_ZERO
+  {
+    struct maExp *e = malloc(sizeof(struct maExp));
+    e->tag = MA_EXP_ZERO;
+    $$ = e;
+  }
+| MA_TKN_SUCC exp
+  {
+    struct maExp *e = malloc(sizeof(struct maExp));
+    e->tag = MA_EXP_SUCC;
+    e->val.succ = $2;
+    $$ = e;
+  }
+| MA_TKN_LAMBDA MA_TKN_VAR MA_TKN_COLON typ MA_TKN_DOT exp
+  {
+    struct maExp *e = malloc(sizeof(struct maExp));
+    e->tag = MA_EXP_ABS;
+    e->val.abs = (struct maAbs) {.var.name = $2, .typ = $4, .body = $6};
+    $$ = e;
+  }
+    
+    
 ;
 
 %%

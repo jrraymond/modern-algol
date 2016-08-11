@@ -29,6 +29,12 @@ enum ma_cmd {
   MA_CMD_ASSIGN,
 };
 
+/* variables may be numbers (debuijn) or \0 terminated strings */
+union maVar {
+  int db;
+  char* name;
+}
+
 struct maExp; //forward declare so we can have mutually recursive structs
 struct maTyp;
 
@@ -94,7 +100,7 @@ void ma_app_del(struct maApp *a);
 
 //rec construct
 struct maFix {
-  unsigned int var;
+  union maVar var;
   struct maExp* body;
   struct maTyp typ;
 };
@@ -106,7 +112,7 @@ void ma_fix_del(struct maFix *a);
 
 //abstraction
 struct maAbs {
-  unsigned int var;
+  union maVar var;
   struct maTyp typ;
   struct maExp *body;
 };
@@ -129,7 +135,7 @@ void ma_tuple_del(struct maTuple *a);
 
 
 struct maBind {
-  unsigned int var;
+  union maVar var;
   struct maExp *exp;
   struct maCmd *cmd;
 };
@@ -189,8 +195,8 @@ void ma_cmd_del(struct maCmd *a);
 struct maExp {
   enum ma_exp tag;
   union {
-    unsigned int num;
-    unsigned int var; //debruijn indexes
+    int num;
+    union maVar var;
     struct maExp* succ; //successor, need a better name for this
     struct maFix fix; //three children rec
     struct maAbs abs; //abstraction
