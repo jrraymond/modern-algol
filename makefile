@@ -49,5 +49,5 @@ cutils:
 
 .PHONY: clean
 clean:
-	rm -f *.o malgol *.tab.* lex.yy.c jit a.out test
+	rm -f *.o malgol *.tab.* lex.yy.c jit a.out test parser interpreter *.bc *.ll
 	$(MAKE) clean -C $(CUTILS_DIR)

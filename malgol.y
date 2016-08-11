@@ -187,8 +187,11 @@ int main(void)
   #endif
   while (true) {
     yyparse();
-    if (ast_res)
+    if (ast_res) {
       ma_exp_enum_print(ast_res->tag);
+      ma_exp_del(ast_res);
+      free(ast_res);
+    }
   }
   return EXIT_SUCCESS;
 }
