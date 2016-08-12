@@ -210,3 +210,9 @@ void ma_cmd_del(struct maCmd *a)
       break;
   }
 }
+
+void ma_def_del(struct maDef *d)
+{
+  free(d->name);
+  ma_exp_del(&d->val);
+}

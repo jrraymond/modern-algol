@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "array.h"
+
 enum ma_exp {
   MA_EXP_TYP,
   MA_EXP_VAR,
@@ -221,5 +223,15 @@ void ma_exp_init(struct maExp *a);
 void ma_exp_mv(struct maExp *to, struct maExp *from);
 void ma_exp_cp(struct maExp *to, struct maExp *from);
 void ma_exp_del(struct maExp *a);
+
+struct maDef {
+  char *name;
+  struct maTyp typ;
+  struct maExp val;
+};
+
+void ma_def_del(struct maDef *d);
+
+CUTILS_ARRAY(def, static inline, struct maDef)
 
 #endif

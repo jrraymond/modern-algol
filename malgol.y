@@ -16,8 +16,7 @@
 
   struct maExp *mk_prim_op(enum ma_prim_op op, struct maExp *a, struct maExp *b);
 
-  struct maExp *ast_res;
-
+  struct Array_def toplevel;
 %}
 
 /* DECLARATIONS
@@ -80,6 +79,7 @@
 %token <exp> MA_TKN_ET
 %token <exp> MA_TKN_NE
 %token <exp> MA_TKN_EOI /*for interpreter, to signal end of inp*/
+%token <exp> MA_TKN_EOF /*for interpreter, to signal end of inp*/
 
 %left MA_TKN_PLUS MA_TKN_DASH 
 %left MA_TKN_ASTERISK MA_TKN_PERCENT MA_TKN_FWD_SLASH
@@ -99,10 +99,33 @@
  * the semantic values associated with tokens or smaller groupings.
  */
 
-input: exp MA_TKN_EOI {
-     ast_res = $1;
-     return 0;
-}
+start:
+  MA_TKN_EOF
+  {
+    return 0;
+  }
+| exp MA_TKN_EOI
+  {
+    /* TODO use line level, non-num types */
+    char name[] = "_";
+    char *n = strdup(name);
+    struct maTyp t = (struct maTyp) {.tag = MA_TYP_NUM};
+    struct maDef d = {.name = n, .typ = t, .val = *$1};
+    free($1);
+    array_def_append(&toplevel, d);
+    return 0;
+  }
+| start def {}
+
+def:
+  MA_TKN_VAR MA_TKN_COLON typ MA_TKN_ASSIGN exp MA_TKN_EOI
+  {
+    struct maDef d = {.name = $1, .typ = *$3, .val = *$5};
+    free($3);
+    free($5);
+    array_def_append(&toplevel, d);
+  }
+
 
 
 typ:
@@ -333,17 +356,27 @@ void yyerror(char const *s)
 #if PMAIN
 int main(void)
 {
+  array_def_init(&toplevel, 64);
+
   #if YYDEBUG
     yydebug=1;
   #endif
+
   while (true) {
     yyparse();
-    if (ast_res) {
-      ma_exp_enum_print(ast_res->tag);
-      ma_exp_del(ast_res);
-      free(ast_res);
+    struct maDef *res;
+    if (array_def_size(&toplevel)) {
+      res = array_def_get_ref(&toplevel, array_def_size(&toplevel)-1);
+      ma_exp_enum_print(res->val.tag);
     }
   }
+
+  for (size_t i=0; i<array_def_size(&toplevel); ++i) {
+    struct maDef *d;
+    d = array_def_get_ref(&toplevel, i);
+    ma_def_del(d);
+  }
+  array_def_del(&toplevel);
   return EXIT_SUCCESS;
 }
 #endif
