@@ -47,6 +47,7 @@ void ma_typ_cp(struct maTyp *to, struct maTyp *from) {}
 void ma_typ_del(struct maTyp *t)
 {
   switch (t->tag) {
+    case MA_TYP_PROD:
     case MA_TYP_ARROW:
       ma_typ_del(t->a);
       free(t->a);

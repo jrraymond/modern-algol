@@ -56,6 +56,13 @@
 %token <exp> MA_TKN_IS
 %token <exp> MA_TKN_DCL
 %token <exp> MA_TKN_AT
+%token <exp> MA_TKN_IF    /* booleans */
+%token <exp> MA_TKN_THEN
+%token <exp> MA_TKN_ELSE
+%token <exp> MA_TKN_TRUE
+%token <exp> MA_TKN_FALSE
+%token <exp> MA_TKN_AND
+%token <exp> MA_TKN_OR
 %token <exp> MA_TKN_SUCC
 %token <exp> MA_TKN_ZERO
 %token <num> MA_TKN_NUM /*  numbers and their ops */
@@ -66,6 +73,12 @@
 %token <exp> MA_TKN_PERCENT
 %token <exp> MA_TKN_FWD_SLASH
 %token <exp> MA_TKN_CARROT
+%token <exp> MA_TKN_GT
+%token <exp> MA_TKN_GTE
+%token <exp> MA_TKN_LT
+%token <exp> MA_TKN_LTE
+%token <exp> MA_TKN_ET
+%token <exp> MA_TKN_NE
 %token <exp> MA_TKN_EOI /*for interpreter, to signal end of inp*/
 
 %left MA_TKN_PLUS MA_TKN_DASH 
@@ -75,7 +88,6 @@
 %type <exp> exp;
 %type <cmd> cmd;
 %type <typ> typ;
-%type <string> var;
 
 %%
 
@@ -114,20 +126,32 @@ typ:
     t->tag = MA_TYP_CMD;
     $$ = t;
   }
+| typ MA_TKN_ASTERISK typ
+  { 
+    struct maTyp *t = malloc(sizeof(struct maTyp));
+    t->tag = MA_TYP_PROD;
+    t->a = $1;
+    t->b = $3;
+    $$ = t;
+  }
+| MA_TKN_LPAREN typ MA_TKN_RPAREN
+  {
+    $$ = $2;
+  }
 
 cmd:
   MA_TKN_RET exp
   {
     struct maCmd *c = malloc(sizeof(struct maCmd));
     c->tag = MA_CMD_RET;
-    c->ret = $2;
+    c->val.ret = $2;
     $$ = c;
   }
 | MA_TKN_BND MA_TKN_VAR MA_TKN_LEFTARROW exp MA_TKN_COLON cmd
   {
     struct maCmd *c = malloc(sizeof(struct maCmd));
-    c->tag = MA_CMD_BND;
-    c->val.bind = (struct maBind) {.var.name = $2, .exp = $4, .cmd = $6};
+    c->tag = MA_CMD_BIND;
+    c->val.bnd = (struct maBind) {.var.name = $2, .exp = $4, .cmd = $6};
     $$ = c;
   }
 | MA_TKN_DCL MA_TKN_VAR MA_TKN_ASSIGN exp MA_TKN_DOT cmd
@@ -140,8 +164,8 @@ cmd:
 | MA_TKN_AT MA_TKN_VAR
   {
     struct maCmd *c = malloc(sizeof(struct maCmd));
-    t->tag = MA_CMD_FETCH;
-    t->val.at.name = $2;
+    c->tag = MA_CMD_FETCH;
+    c->val.at.name = $2;
     $$ = c;
   }
 | MA_TKN_VAR MA_TKN_ASSIGN exp
@@ -184,6 +208,30 @@ exp:
 | exp MA_TKN_CARROT exp 
   {
     $$ = mk_prim_op(MA_PO_POW, $1, $3);
+  }
+| exp MA_TKN_GT exp
+  {
+    $$ = mk_prim_op(MA_PO_GT, $1, $3);
+  }
+| exp MA_TKN_GTE exp
+  {
+    $$ = mk_prim_op(MA_PO_GTE, $1, $3);
+  }
+| exp MA_TKN_LT exp
+  {
+    $$ = mk_prim_op(MA_PO_LT, $1, $3);
+  }
+| exp MA_TKN_LTE exp
+  {
+    $$ = mk_prim_op(MA_PO_LTE, $1, $3);
+  }
+| exp MA_TKN_ET exp
+  {
+    $$ = mk_prim_op(MA_PO_ET, $1, $3);
+  }
+| exp MA_TKN_NE exp
+  {
+    $$ = mk_prim_op(MA_PO_NE, $1, $3);
   }
 | MA_TKN_LPAREN exp MA_TKN_RPAREN 
   {
@@ -232,14 +280,27 @@ exp:
     e->val.app = (struct maApp) {.fun = $1, .arg = $2};
     $$ = e;
   }
-| MA_TYP_CMD cmd
+| MA_TKN_CMD cmd
   {
     struct maExp *e = malloc(sizeof(struct maExp));
     e->tag = MA_EXP_CMD;
     e->val.cmd = *$2;
     free($2);
+    $$ = e;
   }
-    
+| MA_TKN_IF exp MA_TKN_THEN exp MA_TKN_ELSE exp
+  {
+    struct maExp *e = malloc(sizeof(struct maExp));
+    $$ = e;
+  }
+| exp MA_TKN_AND exp
+  {
+    $$ = mk_prim_op(MA_PO_AND, $1, $3);
+  }
+| exp MA_TKN_OR exp
+  {
+    $$ = mk_prim_op(MA_PO_OR, $1, $3);
+  }
     
 ;
 

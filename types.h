@@ -42,6 +42,7 @@ struct maTyp;
 enum ma_typ {
   MA_TYP_NUM,
   MA_TYP_ARROW,
+  MA_TYP_PROD,
   MA_TYP_CMD
 };
 
@@ -65,6 +66,14 @@ enum ma_prim_op {
   MA_PO_DIV,
   MA_PO_REM,
   MA_PO_POW,
+  MA_PO_GT,
+  MA_PO_GTE,
+  MA_PO_LT,
+  MA_PO_LTE,
+  MA_PO_ET,
+  MA_PO_NE,
+  MA_PO_AND,
+  MA_PO_OR
 };
 
 struct maPrimOp {

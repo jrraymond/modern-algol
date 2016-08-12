@@ -53,13 +53,26 @@
 "is"                    { return MA_TKN_IS; }
 "dcl"                   { return MA_TKN_DCL; }
 "@"                     { return MA_TKN_AT; }
-"S"                     { return MA_TKN_SUCC; }
+"if"                    { return MA_TKN_IF; }    /* booleans */
+"then"                  { return MA_TKN_THEN; }
+"else"                  { return MA_TKN_ELSE; }
+"true"                  { return MA_TKN_TRUE; }
+"false"                 { return MA_TKN_FALSE; }
+"S"                     { return MA_TKN_SUCC; }   /* numbers */
 "Z"                     { return MA_TKN_ZERO; }
 "-"                     { return MA_TKN_DASH; }
 "+"                     { return MA_TKN_PLUS; }
 "*"                     { return MA_TKN_ASTERISK; }
 "/"                     { return MA_TKN_FWD_SLASH; }
 "%"                     { return MA_TKN_PERCENT; }
+">"                     { return MA_TKN_GT; }
+">="                     { return MA_TKN_GTE; }
+"<"                     { return MA_TKN_LT; }
+"<="                     { return MA_TKN_LTE; }
+"=="                     { return MA_TKN_ET; }
+"!="                     { return MA_TKN_NE; }
+"&&"                     { return MA_TKN_AND; }
+"||"                     { return MA_TKN_OR; }
 [[:alpha:]]+([[:alnum:]]|_)* {
     yylval.string = __strdup(yytext);
     return MA_TKN_VAR;
