@@ -1,39 +1,5 @@
 
 
-let keywords = [ "nat"; "cmd"; "fix"; "cmd"; "ret"; "bnd"; "dcl"; "S"; "Z"];;
-
-type token =
-  | Var of string
-  | LBracket    (* non-stringy tokens *)
-  | RBracket
-  | LParen
-  | RParen
-  | Lambda
-  | VBar
-  | Dot
-  | Colon
-  | Semicolon
-  | Arrow
-  | RArrow
-  | LArrow
-  | Assign
-  | Fix         (* stringy tokens *)
-  | Nat
-  | Cmd
-  | Ret
-  | Bnd
-  | In
-  | Is
-  | Dcl
-  | At
-  | Int of int (* Numbers and their operations *)
-  | Plus
-  | Dash
-  | Star
-  | Pct
-  | FSlash
-  | Carrot;;
-
 
 (* convert a string to a list of chars *)
 let explode s =
@@ -72,64 +38,26 @@ let starts_with p s =
 let is_sep = String.contains " \t\r\n";;
 
 
-(* separators that are tokens *)
-let is_tkn_sep = String.contains "()[]|\\/@.;+-*%^";;
+let cons_ne xs xss =
+  if xs = []
+  then xss
+  else implode (List.rev xs)::xss;;
 
-
-let token_of_string cs =
-  match cs with
-  | "nat" -> Nat
-  | "->" -> Arrow
-  | "[" -> LBracket
-  | "]" -> RBracket
-  | "(" -> LParen
-  | ")" -> RParen
-  | "\\" -> Lambda
-  | "|" -> VBar
-  | "." -> Dot
-  | ":" -> Colon
-  | ";" -> Semicolon
-  | ">" -> RArrow
-  | "<" -> LArrow
-  | ":=" -> Assign
-  | "fix" -> Fix
-  | "cmd" -> Cmd
-  | "ret" -> Ret
-  | "bnd" -> Bnd
-  | "in" -> In
-  | "is" -> Is
-  | "dcl" -> Dcl
-  | "@" -> At
-  | "+" -> Plus
-  | "-" -> Dash
-  | "*" -> Star
-  | "%" -> Pct
-  | "/" -> FSlash
-  | "^" -> Carrot
-  | wd ->
-      try
-        Int (int_of_string wd)
-      with Failure "int_of_string" ->
-        Var wd;;
 
 let rec lex_h chars acc tkns = 
   match chars with
-  | 'n'::'a'::'t'::rem -> lex_h rem [] (Nat::tkns)
-  | 'f'::'i'::'x'::rem -> lex_h rem [] (Nat::tkns)
-  | ch::rem when is_sep ch ->
-      let wd = implode (List.rev acc) in
-      let t = token_of_string wd in
-      lex_h rem [] (t::tkns)
-  | ch::rem when is_tkn_sep ch ->
-      let wd = implode (List.rev (ch::acc)) in
-      let t = token_of_string wd in
-      lex_h rem [] (t::tkns)
+  | '-'::'>'::rem -> lex_h rem [] ("->"::cons_ne acc tkns)
+  | '<'::'-'::rem -> lex_h rem [] ("<-"::cons_ne acc tkns)
+  | ':'::'='::rem -> lex_h rem [] (":="::cons_ne acc tkns)
+  | '['::rem -> lex_h rem [] ("["::cons_ne acc tkns)
+  | ']'::rem -> lex_h rem [] ("]"::cons_ne acc tkns)
+  | '('::rem -> lex_h rem [] ("("::cons_ne acc tkns)
+  | ')'::rem -> lex_h rem [] (")"::cons_ne acc tkns)
+  | '\\'::rem -> lex_h rem [] ("\\"::cons_ne acc tkns)
+  | '/'::rem -> lex_h rem [] ("/"::cons_ne acc tkns)
+  | ch::rem when is_sep ch -> lex_h rem [] (cons_ne acc tkns)
   | ch::rem -> lex_h rem (ch::acc) tkns
-  | [] when acc <> [] -> 
-      let wd = implode (List.rev acc) in
-      let t = token_of_string wd in
-      List.rev (t::tkns)
-  | [] -> List.rev tkns;; 
+  | [] -> List.rev (cons_ne acc tkns)
 
 
 let lex inp = lex_h (explode inp) [] [];;
