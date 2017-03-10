@@ -1,10 +1,11 @@
 open OUnit2;;
 open Utils;;
+open AstLexer;;
 
 
 let lexer = List.map (fun (arg, ans) ->
   arg >:: fun _ ->
-    let res = Lexer.lex arg in
+    let res = lex arg in
     let m = intercalate "," res ^ "<>" ^ intercalate "," ans in
     assert_equal ~msg:m ans res)
   [ ("int -> int", ["int"; "->"; "int"])
