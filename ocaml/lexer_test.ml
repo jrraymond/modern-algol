@@ -1,11 +1,5 @@
 open OUnit2;;
-
-
-let rec intercalate sep xs =
-  match xs with
-  | [] -> ""
-  | [x] -> x
-  | x::xs' -> x ^ sep ^ intercalate sep xs';;
+open Utils;;
 
 
 let lexer = List.map (fun (arg, ans) ->
