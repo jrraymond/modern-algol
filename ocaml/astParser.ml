@@ -57,7 +57,7 @@ let build_typ =
     | "->"::rem ->
         (
           match stack with
-          | a::b::stack' -> go (FunTyp (a, b)::stack') rem
+          | a::b::stack' -> go (FunTyp (b, a)::stack') rem
           | _ -> raise (Failure ("expected operands"))
         )
     | "int"::rem -> go (IntTyp::stack) rem

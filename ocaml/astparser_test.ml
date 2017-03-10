@@ -15,19 +15,13 @@ let typ_tests = List.map (fun (arg, ans) ->
   ; ("cmd", CmdTyp)
   ; ("((cmd))", CmdTyp)
   ; ("int -> int", FunTyp (IntTyp, IntTyp))
-  (*
   ; ("int->int", FunTyp (IntTyp, IntTyp))
   ; ("(((int)->((int))))", FunTyp (IntTyp, IntTyp))
   ; ("int->cmd", FunTyp (IntTyp, CmdTyp))
-*)
   ; ("int->int->cmd", FunTyp (IntTyp, FunTyp (IntTyp, CmdTyp)))
-  (*
   ; ("int->(int->cmd)", FunTyp (IntTyp, FunTyp (IntTyp, CmdTyp)))
-*)
   ; ("(int->int)->cmd", FunTyp (FunTyp (IntTyp, IntTyp), CmdTyp))
-  (*
   ; ("int->(int->cmd)->(int->cmd)", FunTyp (IntTyp, FunTyp (FunTyp (IntTyp, CmdTyp), FunTyp (IntTyp, CmdTyp))))
-*)
   ];;
 
 
