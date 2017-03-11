@@ -1,79 +1,71 @@
 open Ast;;
 open Utils;;
 
-
-(* turns token list into reverse polish notation *)
-let shunt tkns = 
-  let q = Queue.create () in
-  (* pops elements from xs and onto q until x is reached, x is popped but not
-   * moved *)
-  let rec pop_until p xs =
+type associativity = Left | Right;;
+ 
+ 
+let op_tbl =
+  let t = Hashtbl.create 5 in
+  let () = List.iter (fun (op, prec, assoc) ->
+    Hashtbl.add t op (prec, assoc))
+    [ ("^", 4, Right)
+    ; ("*", 3, Left)
+    ; ("/", 3, Left)
+    ; ("+", 2, Left)
+    ; ("-", 2, Left) ]
+  in t;;
+ 
+ 
+(* equivalent to (takeWhile p xs, dropWhile p xs) *)
+let split_while p =
+  let rec go ls xs =
     match xs with
-    | y::xs' when p y -> xs'
-    | y::xs' -> 
-        let () = Queue.add y q in
-        pop_until p xs'
-    | [] -> raise (Failure "expected ')'")
-  in
-  (* moves remaining operators from stack to queue *)
-  let rec popper stack =
-    match stack with
-    | [] -> list_of_queue q
-    | "->"::stack' ->
-        let () = Queue.add "->" q in
-        popper stack'
-    | t::_ -> raise (Failure ("unexpected '" ^ t ^ "'"))
-  in
-  let rec pusher stack tkns = 
-    match tkns with
-    | [] -> popper stack
-    | "int"::rem -> 
-        let () = Queue.add "int" q in
-        pusher stack rem
-    | "cmd"::rem ->
-        let () = Queue.add "cmd" q in
-        pusher stack rem
-    | "("::rem ->
-        pusher ("("::stack) rem
-    | ")"::rem ->
-        (
-          match pop_until ((=) "(") stack with
-          | "->"::stack' ->
-              let () = Queue.add "->" q in
-              pusher stack' rem
-          | stack' ->
-              pusher stack' rem
-        )
-    | "->"::rem ->
-        pusher ("->"::stack) rem
-    | t::_ -> raise (Failure ("unexpected '" ^ t ^ "'"))
-  in pusher [] tkns;;
+    | x::xs' when p x -> go (x::ls) xs'
+    | _ -> List.rev ls, xs
+  in go [];;
+ 
+ 
+(* create string from list of strings, seperated by `sep` *)
+let rec intercalate sep xs =
+  match xs with
+  | [] -> ""
+  | [x] -> x
+  | x::xs' -> x ^ sep ^ intercalate sep xs';;
+ 
 
+let shunt_typ = 
+  let rec pusher stack queue tkns =
+    match tkns with
+    | [] -> List.rev queue @ stack
+    | "("::tkns' -> pusher ("("::stack) queue tkns'
+    | ")"::tkns' ->
+        let mv, "("::stack' = split_while ((<>) "(") stack in
+        pusher stack' (mv @ queue) tkns'
+    | "->"::tkns' -> pusher ("->"::stack) queue tkns'
+    | t::tkns' -> pusher stack (t::queue) tkns'
+  in pusher [] [];;
+ 
 
 (* constructs AST from token list in reverse polish notaton *)
 let build_typ =
   let rec go stack tkns =
     match tkns with
     | "->"::rem ->
-        (
-          match stack with
-          | a::b::stack' -> go (FunTyp (b, a)::stack') rem
-          | _ -> raise (Failure ("expected operands"))
-        )
+        (match stack with
+        | a::b::stack' -> go (FunTyp (b, a)::stack') rem
+        | _ -> raise (Failure ("expected operands")))
     | "int"::rem -> go (IntTyp::stack) rem
     | "cmd"::rem -> go (CmdTyp::stack) rem
     | t::_ -> raise (Failure ("unexpected '" ^ t ^ "'"))
     | [] -> 
-        (
-          match stack with
-          | [ast] -> ast
-          | _ ->
-              let m = intercalate "," (List.map string_of_typ stack) in
-              raise (Failure ("parse error:" ^ m))
-        )
+        (match stack with
+        | [ast] -> ast
+        | _ ->
+            let m = intercalate "," (List.map string_of_typ stack) in
+            raise (Failure ("parse error:" ^ m)))
   in go [];;
 
 
-let parse_typ tkns = shunt tkns |> build_typ;;
+let parse_typ tkns = shunt_typ tkns |> build_typ;;
 
 let parse tkns = Ret (Var "todo");;

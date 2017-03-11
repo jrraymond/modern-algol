@@ -6,7 +6,7 @@ open Utils;;
 let typ_tests = List.map (fun (arg, ans) ->
   arg >:: fun _ ->
     let tkns = AstLexer.lex arg in
-    let rpn = AstParser.shunt tkns in
+    let rpn = AstParser.shunt_typ tkns in
     let res = AstParser.parse_typ tkns in
     (*let m = string_of_typ res ^ "<>" ^ string_of_typ ans in*)
     let m = string_of_typ res ^ "<>" ^ string_of_typ ans ^ "|" ^ intercalate "," rpn in
