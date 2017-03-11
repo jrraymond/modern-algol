@@ -7,10 +7,15 @@ let rec intercalate sep xs =
   | x::xs' -> x ^ sep ^ intercalate sep xs';;
 
 
-let rec drop_while p xs =
-  match xs with
-  | x::xs' when p x -> drop_while p xs'
-  | _ -> xs;;
+(* equivalent to (takeWhile p xs, dropWhile p xs) *)
+let split_while p =
+  let rec go ls xs =
+    match xs with
+    | x::xs' when p x -> go (x::ls) xs'
+    | _ -> List.rev ls, xs
+  in go [];;
+ 
+ 
 
 
 let list_of_queue (q : 'a Queue.t) : 'a list =

@@ -16,23 +16,6 @@ let op_tbl =
   in t;;
  
  
-(* equivalent to (takeWhile p xs, dropWhile p xs) *)
-let split_while p =
-  let rec go ls xs =
-    match xs with
-    | x::xs' when p x -> go (x::ls) xs'
-    | _ -> List.rev ls, xs
-  in go [];;
- 
- 
-(* create string from list of strings, seperated by `sep` *)
-let rec intercalate sep xs =
-  match xs with
-  | [] -> ""
-  | [x] -> x
-  | x::xs' -> x ^ sep ^ intercalate sep xs';;
- 
-
 let shunt_typ = 
   let rec pusher stack queue tkns =
     match tkns with
@@ -67,5 +50,6 @@ let build_typ =
 
 
 let parse_typ tkns = shunt_typ tkns |> build_typ;;
+
 
 let parse tkns = Ret (Var "todo");;
