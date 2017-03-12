@@ -37,7 +37,7 @@ let rec string_of_exp e =
   | Var x -> x
   | Int i -> string_of_int i
   | Fix (x, t, e') -> "fix " ^ x ^ " : " ^ string_of_typ t ^ " is " ^ string_of_exp e'
-  | Abs (x, t, e') -> "\\" ^ x ^ " : " ^ string_of_typ t ^ " . " ^ string_of_exp e'
+  | Abs (x, t, e') -> "(\\" ^ x ^ " : " ^ string_of_typ t ^ " . " ^ string_of_exp e' ^ ")"
   | App (e0, e1) -> string_of_exp e0 ^ "(" ^ string_of_exp e1 ^ ")"
   | Cmd m -> "cmd " ^ string_of_cmd m
 and string_of_cmd c =

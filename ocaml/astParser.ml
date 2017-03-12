@@ -57,8 +57,14 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
 (* We use recusive descent to parse expressions and commands.
  * We require the grammar be non-left-recursive. The rule 'e ::= e(e)'
  * violates that. 
- *  e ::= d | d(e)
- *  d ::= <int> | fix x:t is e | \x:t.e | cmd m
+ *  e ::= e e | (e) | <int> | fix x:t is e | \x:t.e | cmd m
+ *
+ * We can't use a true recursive descent parser because we want
+ * left-associativity and left-recursion. So we use a shunting yard algorithm
+ * when we want left-associative application.
+ *
+ * http://cs.stackexchange.com/questions/2696/left-recursion-and-left-factoring-which-one-goes-first?rq=1
+ * http://cs.stackexchange.com/questions/56102/how-does-this-left-associative-recursive-descent-parser-work
  *)
 let parse_var tkns = 
   match tkns with
@@ -93,15 +99,17 @@ and parse_expe tkns =
   match tkns with
   | [] -> raise (Failure "unexpected end of input")
   | "("::tkns' ->
-      let e, ")"::tkns1 = parse_expe tkns' in
-      e, tkns1
+      let e, tkns1 = parse_expe tkns' in
+      (match tkns1 with
+      | ")"::tkns2 -> e, tkns2
+      | _ -> raise (Failure ("expected ')', but found '" ^ intercalate " " tkns1 ^ "'")))
   | _ ->
-    let e0, tkns' = parse_expd tkns in
-    if tkns' = []
-    then e0, tkns'
-    else
-      let e1, tkns'' = parse_expe tkns' in
-      App (e0, e1), tkns''
+    let e0, tkns1 = parse_expd tkns in
+    (match tkns1 with
+    | t::_ when t <> ")" ->
+        let e1, tkns2 = parse_expe tkns1 in
+        App (e0, e1), tkns2
+    | _ -> e0, tkns1)
 and parse_expd tkns =
   let () = print_endline ("DXP:" ^ intercalate " " tkns) in
   match tkns with
