@@ -60,26 +60,67 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
  *  e ::= d | d(e)
  *  d ::= <int> | fix x:t is e | \x:t.e | cmd m
  *)
+let parse_var tkns = 
+  match tkns with
+  | t::tkns' -> t, tkns'
+  | [] -> raise (Failure "expected variable");;
+
+
 let rec parse_cmd tkns =
+  let () = print_endline ("CMD:" ^ intercalate " " tkns) in
   match tkns with
   | "ret"::tkns' -> 
-      let e, tkns'' = parse_expe tkns' in
-      Ret e, tkns''
-  | _ -> raise (Failure "todo")
+      let e, tkns1 = parse_expe tkns' in
+      Ret e, tkns1
+  | "bnd"::v::"<-"::tkns' ->
+      let () = print_endline (intercalate " " (snd (parse_expe tkns'))) in 
+      let e, ";"::tkns1 = parse_expe tkns' in
+      let m, tkns2 = parse_cmd tkns1 in
+      Bnd (v, e, m), tkns2
+  | "dcl"::a::":="::tkns' ->
+      let () = print_endline (intercalate " " (snd (parse_expe tkns'))) in 
+      let e, "in"::tkns1 = parse_expe tkns' in
+      let m, tkns2 = parse_cmd tkns1 in
+      Dcl (a, e, m), tkns2
+  | "@"::e::tkns' ->
+      Get e, tkns'
+  | a::":="::tkns' ->
+      let e, tkns1 = parse_expe tkns' in
+      Set (a, e), tkns1
+  | _ -> raise (Failure "failed to parse cmd")
 and parse_expe tkns =
-  let e0, tkns' = parse_expd tkns in
-  if tkns' = []
-  then e0, tkns'
-  else
-    let e1, tkns'' = parse_expe tkns' in
-    App (e0, e1), tkns''
+  let () = print_endline ("EXP:" ^ intercalate " " tkns) in
+  match tkns with
+  | [] -> raise (Failure "unexpected end of input")
+  | "("::tkns' ->
+      let e, ")"::tkns1 = parse_expe tkns' in
+      e, tkns1
+  | _ ->
+    let e0, tkns' = parse_expd tkns in
+    if tkns' = []
+    then e0, tkns'
+    else
+      let e1, tkns'' = parse_expe tkns' in
+      App (e0, e1), tkns''
 and parse_expd tkns =
+  let () = print_endline ("DXP:" ^ intercalate " " tkns) in
   match tkns with
   | [] -> raise (Failure "Unexpected end of input")
   | "cmd"::tkns' ->
       let m, tkns'' = parse_cmd tkns' in
       Cmd m, tkns''
+  | "\\"::x::":"::tkns' ->
+      let tkns1, "."::tkns2 = split_while ((<>) ".") tkns' in
+      let typ = parse_typ tkns1 in
+      let e, tkns3 = parse_expe tkns2 in
+      Abs (x, typ, e), tkns3
+  | "fix"::x::":"::tkns' ->
+      let tkns1, "is"::tkns2 = split_while ((<>) "is") tkns' in
+      let typ = parse_typ tkns1 in
+      let e, tkns3 = parse_expe tkns2 in
+      Fix (x, typ, e), tkns3
   | t::tkns' ->
+      let () = print_endline t in
       try
         let i = int_of_string t in
         Int i, tkns'

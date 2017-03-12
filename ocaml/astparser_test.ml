@@ -29,16 +29,20 @@ let cmd_tests = List.map (fun (arg, ans) ->
     let res = AstParser.parse (AstLexer.lex arg) in
     let m = string_of_cmd res ^ "<>" ^ string_of_cmd ans in
     assert_equal ~msg:m ans res)
-  [ ("ret 0", Ret (Int 0))
+  [
+    (* ("ret 0", Ret (Int 0))
   ; ("ret x", Ret (Var "x"))
   ; ("bnd x<-0; ret x", Bnd ("x", Int 0, (Ret (Var "x"))))
   ; ("a:=1", Set ("a", Int 1))
   ; ("@a", Get "a")
   ; ("dcl a:=1 in @a", Dcl ("a", Int 1, Get "a"))
-  ; ("ret (fix x:int is 0", Ret (Fix ("x", IntTyp, Int 0)))
-  ; ("ret (\\x:int.x", Ret (Abs ("x", IntTyp, Var "x")))
-  ; ("ret (\\x:int.x)(0)", Ret (App (Abs ("x", IntTyp, Var "x"), Int 0)))
-  ; ("ret (cmd (ret 0))", Ret (Cmd (Ret (Int 0))))
+  ; ("ret fix x:int is 0", Ret (Fix ("x", IntTyp, Int 0)))
+  ; ("ret \\x:int.x", Ret (Abs ("x", IntTyp, Var "x")))
+*)
+   ("ret (\\x:int.x)(0)", Ret (App (Abs ("x", IntTyp, Var "x"), Int 0)))
+  (*
+  ; ("ret cmd ret 0", Ret (Cmd (Ret (Int 0))))
+*)
   ];;
 
 
