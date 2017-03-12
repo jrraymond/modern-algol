@@ -72,6 +72,14 @@ let parse_var tkns =
   | [] -> raise (Failure "expected variable");;
 
 
+(* creates left-associative application of rev list of expressions *)
+let rec appify exps =
+  match exps with
+  | [e] -> e
+  | e0::exps' -> App (appify exps', e0)
+  | _ -> raise (Failure "expected expression");;
+
+
 let rec parse_cmd tkns =
   let () = print_endline ("CMD:" ^ intercalate " " tkns) in
   match tkns with
@@ -95,21 +103,22 @@ let rec parse_cmd tkns =
       Set (a, e), tkns1
   | _ -> raise (Failure "failed to parse cmd")
 and parse_expe tkns =
-  let () = print_endline ("EXP:" ^ intercalate " " tkns) in
-  match tkns with
-  | [] -> raise (Failure "unexpected end of input")
-  | "("::tkns' ->
-      let e, tkns1 = parse_expe tkns' in
-      (match tkns1 with
-      | ")"::tkns2 -> e, tkns2
-      | _ -> raise (Failure ("expected ')', but found '" ^ intercalate " " tkns1 ^ "'")))
-  | _ ->
-    let e0, tkns1 = parse_expd tkns in
-    (match tkns1 with
-    | t::_ when t <> ")" ->
-        let e1, tkns2 = parse_expe tkns1 in
-        App (e0, e1), tkns2
-    | _ -> e0, tkns1)
+  let rec parse_expe_h stack tkns =
+    let () = print_endline ("EXP:" ^ intercalate " " tkns) in
+    match tkns with
+    | [] -> appify stack, []
+    | ")"::_ -> appify stack, tkns
+    | "("::tkns' ->
+        let e0, tkns0 = parse_expe_h [] tkns' in
+        (match tkns0 with
+        | ")"::tkns1 -> e0, tkns1
+        | _ -> raise (Failure "expected ')'"))
+    | _ ->
+      let e0, tkns0 = parse_expd tkns in
+      (match tkns0 with
+      | ")"::_ -> e0, tkns0
+      | _ -> parse_expe_h (e0::stack) tkns0)
+  in parse_expe_h [] tkns
 and parse_expd tkns =
   let () = print_endline ("DXP:" ^ intercalate " " tkns) in
   match tkns with
