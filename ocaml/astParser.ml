@@ -1,19 +1,5 @@
 open Ast;;
 open Utils;;
-
-type associativity = Left | Right;;
- 
- 
-let op_tbl =
-  let t = Hashtbl.create 5 in
-  let () = List.iter (fun (op, prec, assoc) ->
-    Hashtbl.add t op (prec, assoc))
-    [ ("^", 4, Right)
-    ; ("*", 3, Left)
-    ; ("/", 3, Left)
-    ; ("+", 2, Left)
-    ; ("-", 2, Left) ]
-  in t;;
  
  
 let shunt_typ = 
@@ -65,6 +51,10 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
  *
  * http://cs.stackexchange.com/questions/2696/left-recursion-and-left-factoring-which-one-goes-first?rq=1
  * http://cs.stackexchange.com/questions/56102/how-does-this-left-associative-recursive-descent-parser-work
+ *
+ *
+ *  e ::= d+
+ *  d ::= (e) | <int> | fix x:t is e | \x:t.e | cmd m
  *)
 let parse_var tkns = 
   match tkns with
@@ -79,20 +69,16 @@ let rec appify exps =
   | e0::exps' -> App (appify exps', e0)
   | _ -> raise (Failure "expected expression");;
 
-
 let rec parse_cmd tkns =
-  let () = print_endline ("CMD:" ^ intercalate " " tkns) in
   match tkns with
   | "ret"::tkns' -> 
       let e, tkns1 = parse_expe tkns' in
       Ret e, tkns1
   | "bnd"::v::"<-"::tkns' ->
-      let () = print_endline (intercalate " " (snd (parse_expe tkns'))) in 
       let e, ";"::tkns1 = parse_expe tkns' in
       let m, tkns2 = parse_cmd tkns1 in
       Bnd (v, e, m), tkns2
   | "dcl"::a::":="::tkns' ->
-      let () = print_endline (intercalate " " (snd (parse_expe tkns'))) in 
       let e, "in"::tkns1 = parse_expe tkns' in
       let m, tkns2 = parse_cmd tkns1 in
       Dcl (a, e, m), tkns2
@@ -103,26 +89,20 @@ let rec parse_cmd tkns =
       Set (a, e), tkns1
   | _ -> raise (Failure "failed to parse cmd")
 and parse_expe tkns =
-  let rec parse_expe_h stack tkns =
-    let () = print_endline ("EXP:" ^ intercalate " " tkns) in
-    match tkns with
-    | [] -> appify stack, []
-    | ")"::_ -> appify stack, tkns
-    | "("::tkns' ->
-        let e0, tkns0 = parse_expe_h [] tkns' in
-        (match tkns0 with
-        | ")"::tkns1 -> e0, tkns1
-        | _ -> raise (Failure "expected ')'"))
-    | _ ->
-      let e0, tkns0 = parse_expd tkns in
-      (match tkns0 with
-      | ")"::_ -> e0, tkns0
-      | _ -> parse_expe_h (e0::stack) tkns0)
-  in parse_expe_h [] tkns
+  match parse_expd tkns with
+  | e, [] -> e, []
+  | e, (t::_ as tkns0) when t = ")" || t = "in" || t = ";" -> e, tkns0
+  | e0, tkns0 ->
+      let e1, tkns1 = parse_expe tkns0 in
+      App (e0, e1), tkns1
 and parse_expd tkns =
-  let () = print_endline ("DXP:" ^ intercalate " " tkns) in
   match tkns with
   | [] -> raise (Failure "Unexpected end of input")
+  | "("::tkns1 ->
+      let e, tkns2 = parse_expe tkns1 in
+      (match tkns2 with
+      | ")"::tkns3 -> e, tkns3
+      | _ -> raise (Failure "expected ')'"))
   | "cmd"::tkns' ->
       let m, tkns'' = parse_cmd tkns' in
       Cmd m, tkns''
@@ -137,7 +117,6 @@ and parse_expd tkns =
       let e, tkns3 = parse_expe tkns2 in
       Fix (x, typ, e), tkns3
   | t::tkns' ->
-      let () = print_endline t in
       try
         let i = int_of_string t in
         Int i, tkns'
