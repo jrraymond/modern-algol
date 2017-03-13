@@ -8,8 +8,10 @@ let shunt_typ =
     | [] -> List.rev queue @ stack
     | "("::tkns' -> pusher ("("::stack) queue tkns'
     | ")"::tkns' ->
-        let mv, "("::stack' = split_while ((<>) "(") stack in
-        pusher stack' (mv @ queue) tkns'
+        let mv, stack0 = split_while ((<>) "(") stack in
+        (match stack0 with
+        | "("::stack1 -> pusher stack1 (mv @ queue) tkns'
+        | _ -> raise (Failure "unmatched ')'"))
     | "->"::tkns' -> pusher ("->"::stack) queue tkns'
     | t::tkns' -> pusher stack (t::queue) tkns'
   in pusher [] [];;
@@ -56,32 +58,25 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
  *  e ::= d+
  *  d ::= (e) | <int> | fix x:t is e | \x:t.e | cmd m
  *)
-let parse_var tkns = 
-  match tkns with
-  | t::tkns' -> t, tkns'
-  | [] -> raise (Failure "expected variable");;
-
-
-(* creates left-associative application of rev list of expressions *)
-let rec appify exps =
-  match exps with
-  | [e] -> e
-  | e0::exps' -> App (appify exps', e0)
-  | _ -> raise (Failure "expected expression");;
-
 let rec parse_cmd tkns =
   match tkns with
   | "ret"::tkns' -> 
       let e, tkns1 = parse_expe tkns' in
       Ret e, tkns1
   | "bnd"::v::"<-"::tkns' ->
-      let e, ";"::tkns1 = parse_expe tkns' in
-      let m, tkns2 = parse_cmd tkns1 in
-      Bnd (v, e, m), tkns2
+      let e, tkns1 = parse_expe tkns' in
+      (match tkns1 with
+      | ";"::tkns2 ->
+        let m, tkns3 = parse_cmd tkns2 in
+        Bnd (v, e, m), tkns3
+      | _ -> raise (Failure "expected ';'"))
   | "dcl"::a::":="::tkns' ->
-      let e, "in"::tkns1 = parse_expe tkns' in
-      let m, tkns2 = parse_cmd tkns1 in
-      Dcl (a, e, m), tkns2
+      let e, tkns1 = parse_expe tkns' in
+      (match tkns1 with
+      | "in"::tkns2 ->
+        let m, tkns3 = parse_cmd tkns2 in
+        Dcl (a, e, m), tkns3
+      | _ -> raise (Failure "expected 'in'"))
   | "@"::e::tkns' ->
       Get e, tkns'
   | a::":="::tkns' ->
@@ -107,15 +102,21 @@ and parse_expd tkns =
       let m, tkns'' = parse_cmd tkns' in
       Cmd m, tkns''
   | "\\"::x::":"::tkns' ->
-      let tkns1, "."::tkns2 = split_while ((<>) ".") tkns' in
-      let typ = parse_typ tkns1 in
-      let e, tkns3 = parse_expe tkns2 in
-      Abs (x, typ, e), tkns3
+      let tkns1, tkns2 = split_while ((<>) ".") tkns' in
+      (match tkns2 with
+      | "."::tkns3 ->
+        let typ = parse_typ tkns1 in
+        let e, tkns4 = parse_expe tkns3 in
+        Abs (x, typ, e), tkns4
+      | _ -> raise (Failure "expected '.'"))
   | "fix"::x::":"::tkns' ->
-      let tkns1, "is"::tkns2 = split_while ((<>) "is") tkns' in
-      let typ = parse_typ tkns1 in
-      let e, tkns3 = parse_expe tkns2 in
-      Fix (x, typ, e), tkns3
+      let tkns1, tkns2 = split_while ((<>) "is") tkns' in
+      (match tkns2 with
+      | "is"::tkns3 ->
+        let typ = parse_typ tkns1 in
+        let e, tkns4 = parse_expe tkns3 in
+        Fix (x, typ, e), tkns4
+      | _ -> raise (Failure "expected 'is'"))
   | t::tkns' ->
       try
         let i = int_of_string t in
