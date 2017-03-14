@@ -51,10 +51,6 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
  * left-associativity and left-recursion. So we use a shunting yard algorithm
  * when we want left-associative application.
  *
- * http://cs.stackexchange.com/questions/2696/left-recursion-and-left-factoring-which-one-goes-first?rq=1
- * http://cs.stackexchange.com/questions/56102/how-does-this-left-associative-recursive-descent-parser-work
- *
- *
  *  e ::= d+
  *  d ::= (e) | <int> | fix x:t is e | \x:t.e | cmd m
  *)
