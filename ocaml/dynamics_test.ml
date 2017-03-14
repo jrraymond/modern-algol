@@ -4,8 +4,8 @@ open OUnit2;;
 
 
 let id_fun = Abs ("x", IntTyp, Var "x");;
-exception Stuck of string;;
-(* todo what to do on no step, throw exception? *)
+
+
 (* test exp values do not step *)
 let exp_value_tests = List.map (fun v -> 
   let vs = string_of_exp v in
