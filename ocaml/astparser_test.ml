@@ -1,5 +1,5 @@
 open OUnit2;;
-open Ast;;
+open ParseAst;;
 open Utils;;
 
 

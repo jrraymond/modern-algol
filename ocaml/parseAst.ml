@@ -1,10 +1,8 @@
 type typ = IntTyp | FunTyp of typ * typ | CmdTyp
 
-type var = { label : string; index : int }
-
 
 type exp =
-  | Var of var
+  | Var of string
   | Int of int
   | Fix of string * typ * exp
   | Abs of string * typ * exp
@@ -37,12 +35,11 @@ let rec base_typ_of_string s =
 
 let rec string_of_exp e =
   match e with
-  | Var x -> x.label
+  | Var x -> x
   | Int i -> string_of_int i
   | Fix (x, t, e') -> "fix " ^ x ^ " : " ^ string_of_typ t ^ " is " ^ string_of_exp e'
   | Abs (x, t, e') -> "(\\" ^ x ^ " : " ^ string_of_typ t ^ " . " ^ string_of_exp e' ^ ")"
-  | App (e0, (App _ as e1)) -> string_of_exp e0 ^ "(" ^ string_of_exp e1 ^ ")"
-  | App (e0, e1) -> string_of_exp e0 ^ " " ^ string_of_exp e1
+  | App (e0, e1) -> string_of_exp e0 ^ "(" ^ string_of_exp e1 ^ ")"
   | Cmd m -> "cmd " ^ string_of_cmd m
 and string_of_cmd c =
   match c with
