@@ -9,8 +9,8 @@ let id_fun = Abs ("x", IntTyp, Var { label = "x"; index = 0});;
 
 let string_of_result err ok x =
   match x with
-  | Ok a -> ok a
-  | Error a -> err a;;
+  | Ok a -> "Ok " ^ ok a
+  | Error a -> "Error " ^ err a;;
 
 
 let string_of_typ_result =
@@ -20,7 +20,7 @@ let string_of_typ_result =
 let well_typed_exp_tests = List.map (fun (arg0, arg1, ans) ->
   let vs = string_of_ctx arg0 ^ "," ^ string_of_exp arg1 in
   let asg = asg_of_list [] in
-  let res = type_check arg0 asg (Ret arg1) in
+  let res = type_check_exp arg0 asg 0 arg1 in
   let m = string_of_typ_result res ^ "<>" ^ string_of_typ_result ans in
   vs >:: (fun _ -> assert_equal ~msg:m ans res))
   [ (ctx_of_list [(0, IntTyp)], Var { label = "x"; index = 0 }, Ok IntTyp)
