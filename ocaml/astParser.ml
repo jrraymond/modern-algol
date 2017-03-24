@@ -1,5 +1,6 @@
 open ParseAst;;
 open Utils;;
+open Typ;;
  
  
 let shunt_typ = 

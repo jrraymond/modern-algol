@@ -1,5 +1,6 @@
 open Result;;
 open Ast;;
+open Typ;;
 
 
 
