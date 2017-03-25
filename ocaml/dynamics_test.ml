@@ -97,11 +97,11 @@ let state_step_tests = List.map (fun (state, ans) ->
   ; ( let memory = Hashtbl.create 4 in
       { cmd = Dcl ("a", Int 0, Bnd ("x", Cmd (Set ("a", Int 4)), Get "a")); memory }
     , let memory = Hashtbl.create 4 in
-      let () = Hashtbl.add memory "a" (Int 4) in
-      { cmd = Dcl ("a", Int 0, Bnd ("x", Cmd (Ret (Int 4)), Get "a")); memory } )
+      { cmd = Dcl ("a", Int 4, Bnd ("x", Cmd (Ret (Int 4)), Get "a")); memory } )
     (* 34.3k *)
   ; ( { cmd = Dcl ("a", Int 0, Ret (Int 1)); memory }
     , { cmd = Ret (Int 1); memory } )
+
   ];;
 
 

@@ -27,7 +27,7 @@ let string_of_state state =
     state.memory
     []
   in 
-  cmd ^ intercalate "," mem;;
+  cmd ^ "||" ^ intercalate "," mem;;
       
 
 let is_exp_val e = 
@@ -76,17 +76,23 @@ let step_state (s : state) : state =
         Bnd (x, Cmd m1', m2)
     | Bnd (x, e, m) ->
         Bnd (x, step_exp e, m)
+    | Dcl (a, e, Ret e') when is_exp_val e && is_exp_val e' ->
+        Ret e'
     | Dcl (a, e, m) when is_exp_val e ->
         let () = Hashtbl.add s.memory a e in
         let m' = step_cmd m in
         let e' = Hashtbl.find s.memory a in
         let () = Hashtbl.remove s.memory a in
         Dcl (a, e', m')
-    | Dcl (a, e, Ret e') when is_exp_val e && is_exp_val e' ->
-        Ret e'
     | Dcl (a, e, m) ->
         Dcl (a, step_exp e, m)
-    | _ -> raise Stuck
+    | Get a -> Ret (Hashtbl.find s.memory a)
+    | Set (a, e) when is_exp_val e ->
+        let () = Hashtbl.replace s.memory a  e in
+        Ret e
+    | Set (a, e) ->
+        let e' = step_exp e in
+        Set (a, e')
   in { s with cmd = step_cmd s.cmd };;
   
 
