@@ -1,4 +1,4 @@
-open Typ;;
+include Typ;;
 
 
 type var = { label : string; index : int }

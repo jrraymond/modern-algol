@@ -45,14 +45,63 @@ let cmd_final_state_test =
 
 
 (* test single step of commands *)
+let memory = Hashtbl.create 0;;
+
 let state_step_tests = List.map (fun (state, ans) ->
   let s = string_of_state state in
   let res = step_state state in
   let m = string_of_state res ^ "<>" ^ string_of_state ans in
-  s >:: (fun _ -> assert_equal ~msg:m ans res))
+  s >:: (fun _ -> assert_equal ~cmp:eq_state ~msg:m ans res))
   [ (* 34.3b *)
-    ({ cmd = Ret (App (id_fun, id_fun)); memory = Hashtbl.create 0 },
-     { cmd = Ret id_fun; memory = Hashtbl.create 0 })
+    ( { cmd = Ret (App (id_fun, id_fun)); memory },
+      { cmd = Ret id_fun; memory } )
+  ; (* 34.3c *)
+    ( { cmd = Bnd ("x", Cmd (Ret (App (id_fun, id_fun))), Ret (Int 0)); memory }
+    , { cmd = Bnd ("x", Cmd (Ret id_fun), Ret (Int 0)); memory } )
+  ; (* 34.3d *)
+    ( { cmd = Bnd ("x", Cmd (Ret (Int 0)), Ret (Var { label = "x"; index = 0 })); memory }
+    , { cmd = Ret (Int 0); memory } )
+  ; (* 34.3e *)
+    ( let memory = Hashtbl.create 4 in
+      let () = Hashtbl.add memory "a0" (Int 0) in
+      { cmd = Bnd ("x", Cmd (Set ("a0", Int 1)), Ret (Var { label = "x"; index = 0 })); memory }
+    , let memory = Hashtbl.create 4 in
+      let () = Hashtbl.add memory "a0" (Int 1) in
+      { cmd = Bnd ("x", Cmd (Ret (Int 1)), Ret (Var { label = "x"; index = 0 })); memory } )
+    (* 34.3f *)
+  ; ( let memory = Hashtbl.create 4 in
+      let () = Hashtbl.add memory "a0" (Int 0) in
+      { cmd = Get "a0"; memory }
+    , { cmd = Ret (Int 0); memory } )
+    (* 34.3g *)
+  ; ( { cmd = Set ("a0", App (id_fun, Int 1)); memory }
+    , { cmd = Set ("a0", Int 1); memory } )
+    (* 34.3h *)
+  ; ( let memory = Hashtbl.create 4 in
+      let () = Hashtbl.add memory "a0" (Int 0) in
+      { cmd = Set ("a0", Int 1); memory }
+    , let memory = Hashtbl.create 4 in
+      let () = Hashtbl.add memory "a0" (Int 1) in
+      { cmd = Ret (Int 1); memory } )
+    (* 34.3i *)
+  ; ( { cmd = Dcl ("a", App (id_fun, Int 0), Get "a"); memory }
+    , { cmd = Dcl ("a", Int 0, Get "a"); memory } )
+    (* 34.3j step modifies memory *)
+  ; ( let memory = Hashtbl.create 4 in
+      let () = Hashtbl.add memory "a2" (Int 2) in
+      { cmd = Dcl ("a", Int 0, Bnd ("x", Cmd (Set ("a2", Int 4)), Get "a")); memory }
+    , let memory = Hashtbl.create 4 in
+      let () = Hashtbl.add memory "a2" (Int 4) in
+      { cmd = Dcl ("a", Int 0, Bnd ("x", Cmd (Ret (Int 4)), Get "a")); memory } )
+    (* step modifies memory assignable points to *)
+  ; ( let memory = Hashtbl.create 4 in
+      { cmd = Dcl ("a", Int 0, Bnd ("x", Cmd (Set ("a", Int 4)), Get "a")); memory }
+    , let memory = Hashtbl.create 4 in
+      let () = Hashtbl.add memory "a" (Int 4) in
+      { cmd = Dcl ("a", Int 0, Bnd ("x", Cmd (Ret (Int 4)), Get "a")); memory } )
+    (* 34.3k *)
+  ; ( { cmd = Dcl ("a", Int 0, Ret (Int 1)); memory }
+    , { cmd = Ret (Int 1); memory } )
   ];;
 
 

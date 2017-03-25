@@ -7,6 +7,18 @@ exception Stuck;;
 
 type state = { cmd : cmd; memory : (string, exp) Hashtbl.t };;
 
+let eq_state a b =
+  let subset_of a b =
+    try
+      let () = Hashtbl.iter (fun k v ->
+        if v = Hashtbl.find b.memory k
+        then ()
+        else raise Not_found
+      ) a.memory
+      in true
+    with Not_found -> false
+  in a = b && subset_of a b && subset_of b a;;
+
 
 let string_of_state state = 
   let cmd = string_of_cmd state.cmd in
