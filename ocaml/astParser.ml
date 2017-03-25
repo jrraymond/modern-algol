@@ -2,7 +2,10 @@ open ParseAst;;
 open Utils;;
 open Typ;;
  
- 
+
+exception ParseFailure of string;;
+
+
 let shunt_typ = 
   let rec pusher stack queue tkns =
     match tkns with
@@ -12,7 +15,7 @@ let shunt_typ =
         let mv, stack0 = split_while ((<>) "(") stack in
         (match stack0 with
         | "("::stack1 -> pusher stack1 (mv @ queue) tkns'
-        | _ -> raise (Failure "unmatched ')'"))
+        | _ -> raise (ParseFailure "unmatched ')'"))
     | "->"::tkns' -> pusher ("->"::stack) queue tkns'
     | t::tkns' -> pusher stack (t::queue) tkns'
   in pusher [] [];;
@@ -25,16 +28,16 @@ let build_typ =
     | "->"::rem ->
         (match stack with
         | a::b::stack' -> go (FunTyp (b, a)::stack') rem
-        | _ -> raise (Failure ("expected operands")))
+        | _ -> raise (ParseFailure ("expected operands")))
     | "int"::rem -> go (IntTyp::stack) rem
     | "cmd"::rem -> go (CmdTyp::stack) rem
-    | t::_ -> raise (Failure ("unexpected '" ^ t ^ "'"))
+    | t::_ -> raise (ParseFailure ("unexpected '" ^ t ^ "'"))
     | [] -> 
         (match stack with
         | [ast] -> ast
         | _ ->
             let m = intercalate "," (List.map string_of_typ stack) in
-            raise (Failure ("parse error:" ^ m)))
+            raise (ParseFailure ("parse error:" ^ m)))
   in go [];;
 
 
@@ -66,20 +69,20 @@ let rec parse_cmd tkns =
       | ";"::tkns2 ->
         let m, tkns3 = parse_cmd tkns2 in
         Bnd (v, e, m), tkns3
-      | _ -> raise (Failure "expected ';'"))
+      | _ -> raise (ParseFailure "expected ';'"))
   | "dcl"::a::":="::tkns' ->
       let e, tkns1 = parse_expe tkns' in
       (match tkns1 with
       | "in"::tkns2 ->
         let m, tkns3 = parse_cmd tkns2 in
         Dcl (a, e, m), tkns3
-      | _ -> raise (Failure "expected 'in'"))
+      | _ -> raise (ParseFailure "expected 'in'"))
   | "@"::e::tkns' ->
       Get e, tkns'
   | a::":="::tkns' ->
       let e, tkns1 = parse_expe tkns' in
       Set (a, e), tkns1
-  | _ -> raise (Failure "failed to parse cmd")
+  | _ -> raise (ParseFailure "failed to parse cmd")
 and parse_expe tkns =
   match parse_expd tkns with
   | e, [] -> e, []
@@ -89,12 +92,12 @@ and parse_expe tkns =
       App (e0, e1), tkns1
 and parse_expd tkns =
   match tkns with
-  | [] -> raise (Failure "Unexpected end of input")
+  | [] -> raise (ParseFailure "Unexpected end of input")
   | "("::tkns1 ->
       let e, tkns2 = parse_expe tkns1 in
       (match tkns2 with
       | ")"::tkns3 -> e, tkns3
-      | _ -> raise (Failure "expected ')'"))
+      | _ -> raise (ParseFailure "expected ')'"))
   | "cmd"::tkns' ->
       let m, tkns'' = parse_cmd tkns' in
       Cmd m, tkns''
@@ -105,7 +108,7 @@ and parse_expd tkns =
         let typ = parse_typ tkns1 in
         let e, tkns4 = parse_expe tkns3 in
         Abs (x, typ, e), tkns4
-      | _ -> raise (Failure "expected '.'"))
+      | _ -> raise (ParseFailure "expected '.'"))
   | "fix"::x::":"::tkns' ->
       let tkns1, tkns2 = split_while ((<>) "is") tkns' in
       (match tkns2 with
@@ -113,7 +116,7 @@ and parse_expd tkns =
         let typ = parse_typ tkns1 in
         let e, tkns4 = parse_expe tkns3 in
         Fix (x, typ, e), tkns4
-      | _ -> raise (Failure "expected 'is'"))
+      | _ -> raise (ParseFailure "expected 'is'"))
   | t::tkns' ->
       try
         let i = int_of_string t in

@@ -34,8 +34,13 @@ let is_exp_val e =
   match e with
   | Abs _ -> true
   | Int _ -> true
+  | Cmd _ -> true
   | _ -> false;;
 
+let is_final m =
+  match m with
+  | Ret e -> is_exp_val e
+  | _ -> false;;
 
 (* subst_exp e for x in d *)
 let rec subst_exp (e : exp) (i : int) (d : exp) : exp =
@@ -96,11 +101,13 @@ let step_state (s : state) : state =
   in { s with cmd = step_cmd s.cmd };;
   
 
-      
+let rec eval_exp ctx e = 
+  if is_exp_val e 
+  then e
+  else eval_exp ctx (step_exp e);;
 
- 
 
-let eval_exp (e : exp) : exp = Int 0;;
-
-
-let eval (m : cmd) : cmd = Ret (Int 0);;
+let rec eval_cmd ctx s = 
+  if is_final s.cmd
+  then s.cmd
+  else eval_cmd ctx (step_state s);;
