@@ -69,18 +69,20 @@ let rec step_exp (e : exp) : exp =
   | _ -> raise Stuck;;
 
 
-let step_state (s : state) : state =
+let step_state (s : state) ctx : state =
   let rec step_cmd (m : cmd) : cmd =
     match m with
     | Ret e ->
-        Ret (step_exp e)
+        Ret (step_exp e), ctx
     | Bnd (x, Cmd (Ret e), m) when is_exp_val e ->
-        subst_cmd e 0 m
+        subst_cmd e 0 m, ctx
     | Bnd (x, Cmd m1, m2) ->
         let m1' = step_cmd m1 in
-        Bnd (x, Cmd m1', m2)
+        Bnd (x, Cmd m1', m2), ctx
     | Bnd (x, e, m) ->
-        Bnd (x, step_exp e, m)
+        Bnd (x, step_exp e, m), ctx
+    | BndT (x, e) when is_exp_val e->
+        Ret e, (
     | Dcl (a, e, Ret e') when is_exp_val e && is_exp_val e' ->
         Ret e'
     | Dcl (a, e, m) when is_exp_val e ->

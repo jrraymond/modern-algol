@@ -77,6 +77,7 @@ and type_check_cmd ctx asg m =
           type_check_cmd ctx' asg m0
       | Ok t -> Error ("expected Cmd, found " ^ string_of_typ t)
       | e -> e)
+  | BndT (x, e) -> type_check_exp ctx asg e
   | Dcl (x, e, m0) ->
       (match type_check_exp ctx asg e with
       | Ok IntTyp -> 
@@ -87,6 +88,7 @@ and type_check_cmd ctx asg m =
               Ok CmdTyp
           | e -> e)
       | e -> e)
+  | DclT (x, e) -> type_check_exp ctx asg e
   | Get x ->
       if Hashtbl.mem asg x
       then Ok CmdTyp

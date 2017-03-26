@@ -31,10 +31,14 @@ and db_of_cmd m ctx =
       let e' = db_of_exp e ctx in
       let m0' = db_of_cmd m0 (x::ctx) in
       Ast.Bnd (x, e', m0')
+  | ParseAst.BndT (x, e) ->
+      Ast.BndT (x, db_of_exp e ctx)
   | ParseAst.Dcl (a, e, m0) ->
       let e' = db_of_exp e ctx in
       let m0' = db_of_cmd m0 ctx in
       Ast.Dcl (a, e', m0')
+  | ParseAst.DclT (a, e) ->
+      Ast.DclT (a, db_of_exp e ctx)
   | ParseAst.Get a -> Ast.Get a
   | ParseAst.Set (a, e) ->
       let e' = db_of_exp e ctx in

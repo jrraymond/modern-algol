@@ -46,6 +46,7 @@ let build_typ =
  *)
 let parse_typ tkns = shunt_typ tkns |> build_typ;;
 
+
 (* We use recusive descent to parse expressions and commands.
  * We require the grammar be non-left-recursive. The rule 'e ::= e(e)'
  * violates that. 
@@ -57,6 +58,9 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
  *
  *  e ::= d+
  *  d ::= (e) | <int> | fix x:t is e | \x:t.e | cmd m
+ *
+ * The syntax for commands is
+ *  m ::= ret e | bnd x <- e ; m | dcl a := e in m | @ a | a := e
  *)
 let rec parse_cmd tkns =
   match tkns with
@@ -69,6 +73,7 @@ let rec parse_cmd tkns =
       | ";"::tkns2 ->
         let m, tkns3 = parse_cmd tkns2 in
         Bnd (v, e, m), tkns3
+      | [] -> BndT (v, e), []
       | _ -> raise (ParseFailure "expected ';'"))
   | "dcl"::a::":="::tkns' ->
       let e, tkns1 = parse_expe tkns' in
@@ -76,6 +81,7 @@ let rec parse_cmd tkns =
       | "in"::tkns2 ->
         let m, tkns3 = parse_cmd tkns2 in
         Dcl (a, e, m), tkns3
+      | [] -> DclT (a, e), []
       | _ -> raise (ParseFailure "expected 'in'"))
   | "@"::e::tkns' ->
       Get e, tkns'
