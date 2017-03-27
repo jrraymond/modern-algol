@@ -46,3 +46,10 @@ and string_of_cmd c =
       "dcl " ^ x ^ " := " ^ string_of_exp e
   | Get a -> "@" ^ a
   | Set (a, e) -> a ^ " := " ^ string_of_exp e;;
+
+
+let is_toplevel m =
+  match m with
+  | DclT _ -> true
+  | BndT _ -> true
+  | _ -> false;;

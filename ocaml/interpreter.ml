@@ -51,36 +51,43 @@ let is_cmd tkns =
   | _ -> false
 
 
-let rec run ctx env memory =
-  let inp = read_line () in
-  let tkns = AstLexer.lex inp in
-  try 
-    if is_cmd tkns
-    then
-      let m, _ = AstParser.parse_cmd tkns in
-      let cmd = db_of_cmd m [] in
-      (match Statics.type_check_cmd ctx env cmd with
-      | Error e -> Printf.printf "%s\n" e
-      | Ok t -> Printf.printf ": %s\n" (Ast.string_of_typ t));
-      let m' = Dynamics.eval_cmd ctx { Dynamics.cmd ; Dynamics.memory } in
-      Printf.printf "> %s\n" (Ast.string_of_cmd m');
-      run ctx env memory
-    else
-      let e, _ = AstParser.parse_expe tkns in
-      let exp = db_of_exp e [] in
-      (match Statics.type_check_exp ctx env exp with
-      | Error e -> Printf.printf "%s\n" e
-      | Ok t -> Printf.printf ": %s\n" (Ast.string_of_typ t));
-      let e' = Dynamics.eval_exp ctx exp in
-      Printf.printf "> %s\n" (Ast.string_of_exp e');
-      run ctx env memory
-  with
-  | AstParser.ParseFailure msg ->
-      Printf.printf "%s\n" msg;
-      run ctx env memory
-  | Not_found ->
-      Printf.printf "undefined variable\n";
-      run ctx env memory;;
+let rec run mem mem_t ctx ctx_t =
+  while true do
+    (*let () = Printf.printf "%s | %s\n" (Statics.string_of_asg mem_t) (Statics.string_of_ctx ctx_t) in*)
+    let inp = read_line () in
+    let tkns = AstLexer.lex inp in
+    try 
+      if is_cmd tkns
+      then
+        let m, _ = AstParser.parse_cmd tkns in
+        let cmd = db_of_cmd m (List.map fst ctx) in
+        let ctx_t' =
+          (match Statics.type_check_toplevel ctx_t mem_t cmd with
+          | Error e -> let () = Printf.printf "%s\n" e in ctx_t
+          | Ok (t, ctx_t') ->
+              let () = Printf.printf ": %s\n" (Ast.string_of_typ t) in
+              ctx_t')
+        in
+        let v, ctx' = Dynamics.eval_toplevel mem ctx cmd in
+        Printf.printf "> %s\n" (Ast.string_of_cmd v);
+        run mem mem_t ctx' ctx_t'
+      else
+        let e, _ = AstParser.parse_expe tkns in
+        let exp = db_of_exp e (List.map fst ctx) in
+        (match Statics.type_check_exp ctx_t mem_t exp with
+        | Error e -> Printf.printf "%s\n" e
+        | Ok t -> Printf.printf ": %s\n" (Ast.string_of_typ t));
+        let e' = Dynamics.eval_exp ctx exp in
+        Printf.printf "> %s\n" (Ast.string_of_exp e');
+        run mem mem_t ctx ctx_t
+    with
+    | AstParser.ParseFailure msg ->
+        Printf.printf "%s\n" msg;
+        run mem mem_t ctx ctx_t
+    | Not_found ->
+        Printf.printf "undefined variable\n";
+        run mem mem_t ctx ctx_t
+  done;;
 
 
-let () = run [] (Statics.asg_of_list []) (Hashtbl.create 8);;
+let () = run (Hashtbl.create 8) (Statics.asg_of_list []) [] [];;

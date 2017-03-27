@@ -18,7 +18,11 @@ let string_of_ctx ctx =
   Utils.intercalate ",";;
 
 
-let string_of_asg asg = "";;
+let string_of_asg asg =
+  let xs = Hashtbl.fold (fun k v acc ->
+    Printf.sprintf "%s:%s" k (string_of_typ v) :: acc)
+    asg []
+  in Utils.intercalate "," xs;;
 
 
 let add_to_ctx ctx t = t::ctx;;
@@ -77,18 +81,18 @@ and type_check_cmd ctx asg m =
           type_check_cmd ctx' asg m0
       | Ok t -> Error ("expected Cmd, found " ^ string_of_typ t)
       | e -> e)
-  | BndT (x, e) -> type_check_exp ctx asg e
-  | Dcl (x, e, m0) ->
+  | BndT _ -> raise (Failure "toplevel")
+  | DclT _ -> raise (Failure "toplevel")
+  | Dcl (a, e, m0) ->
       (match type_check_exp ctx asg e with
       | Ok IntTyp -> 
-          let () = Hashtbl.add asg x IntTyp in
+          let () = Hashtbl.add asg a IntTyp in
           (match type_check_cmd ctx asg m0 with
           | Ok CmdTyp ->
-              let () = Hashtbl.remove asg x in
+              let () = Hashtbl.remove asg a in
               Ok CmdTyp
           | e -> e)
       | e -> e)
-  | DclT (x, e) -> type_check_exp ctx asg e
   | Get x ->
       if Hashtbl.mem asg x
       then Ok CmdTyp
@@ -101,3 +105,20 @@ and type_check_cmd ctx asg m =
         | e -> e)
       else Error "Assignable x not in scope";;
 
+
+let type_check_toplevel ctx asg m =
+  match m with
+  | BndT (x, e) ->
+      (match type_check_exp ctx asg e with
+      | Ok t -> Ok (t, t::ctx)
+      | Error e -> Error e)
+  | DclT (a, e) -> 
+      (match type_check_exp ctx asg e with
+      | Ok t ->
+          let () = Hashtbl.add asg a t in
+          Ok (CmdTyp, ctx)
+      | Error e -> Error e)
+  |  _ ->
+      (match type_check_cmd ctx asg m with
+      | Ok t -> Ok (t, ctx)
+      | Error e -> Error e);;

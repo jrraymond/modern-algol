@@ -71,7 +71,7 @@ and subst_cmd (e : exp) (i : int) (m : cmd) : cmd =
 let step_exp ctx = 
   let rec step e = 
     match e with
-    | Var v -> List.nth ctx v.index
+    | Var v -> List.nth ctx v.index |> snd
     | App (Abs (x, _, e0), e1) when is_exp_val e1 -> subst_exp e1 0 e0
     | App (Abs _ as e0, e1) -> App (e0, step e1)
     | App (e0, e1) -> App (step e0, e1)
@@ -123,3 +123,19 @@ let rec eval_cmd mem ctx m =
   if is_final m
   then m
   else eval_cmd mem ctx (step_cmd mem ctx m);;
+
+
+let rec eval_toplevel mem ctx m =
+  match m with
+  | BndT (x, e) when is_exp_val e ->
+      Ret e, (x, e)::ctx
+  | BndT (x, e) ->
+      eval_toplevel mem ctx (BndT (x, (eval_exp ctx e)))
+  | DclT (a, e) when is_exp_val e ->
+      let () = Hashtbl.add mem a e in
+      Ret e, ctx
+  | DclT (a, e) ->
+      eval_toplevel mem ctx (DclT (a, eval_exp ctx e))
+  | _ -> eval_cmd mem ctx m, ctx;;
+
+
