@@ -4,6 +4,8 @@ open Utils;;
 
 exception Stuck;;
 
+exception UnhandledCase;;
+
 type memory = (string, exp) Hashtbl.t;;
 
 let eq_memory a b =
@@ -68,6 +70,14 @@ and subst_cmd (e : exp) (i : int) (m : cmd) : cmd =
   | _ -> m;;
 
 
+let rec match_patterns i cs =
+  match cs with
+  | [] -> raise UnhandledCase
+  | (Lit j, e)::cs' when i = j -> e
+  | (Binder x, e)::cs' -> subst_exp (Int i) 0 e
+  | _::cs' -> match_patterns i cs';;
+
+
 let step_exp ctx = 
   let rec step e = 
     match e with
@@ -76,6 +86,8 @@ let step_exp ctx =
     | App (Abs _ as e0, e1) -> App (e0, step e1)
     | App (e0, e1) -> App (step e0, e1)
     | Fix (x, _, e0) -> subst_exp e 0 e0
+    | Case (Int i, cs) -> match_patterns i cs
+    | Case (e0, cs) -> Case (step e0, cs)
     | _ -> raise Stuck
   in step;;
 

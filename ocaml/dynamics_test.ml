@@ -33,6 +33,10 @@ let exp_step_tests = List.map (fun (arg, ans) ->
   ; (Fix ("x", IntTyp, App (id_fun, Abs ("z", IntTyp, Var { label = "x"; index = 1} ))),
     App (id_fun, Abs ("z", IntTyp, Fix ("x", IntTyp, App (id_fun, Abs ("z", IntTyp, Var { label = "x"; index = 1 } )))))) (* 19.3h *)
   ; (Var { label = "x"; index = 0 }, Int 0)
+  ; (Case (App (id_fun, Int 0), [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })]),
+    (Case (Int 0, [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })])))
+  ; (Case (Int 0, [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })]), Int 1)
+  ; (Case (Int 2, [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })]), Int 2)
   ];;
 
 
