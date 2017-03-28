@@ -58,10 +58,15 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
  *
  *  e ::= d+
  *  d ::= (e) | <int> | fix x:t is e | \x:t.e | cmd m
+ *      | case e of \(\| p -> e\)+
  *
  * The syntax for commands is
  *  m ::= ret e | bnd x <- e ; m | dcl a := e in m | @ a | a := e
  *)
+let parse_pattern tkn =
+  try Lit (int_of_string tkn)
+  with Failure _ -> Binder tkn;;
+
 let rec parse_cmd tkns =
   match tkns with
   | "ret"::tkns' -> 
@@ -92,7 +97,7 @@ let rec parse_cmd tkns =
 and parse_expe tkns =
   match parse_expd tkns with
   | e, [] -> e, []
-  | e, (t::_ as tkns0) when t = ")" || t = "in" || t = ";" -> e, tkns0
+  | e, (t::_ as tkns0) when t = ")" || t = "in" || t = ";" || t = "|" -> e, tkns0
   | e0, tkns0 ->
       let e1, tkns1 = parse_expe tkns0 in
       App (e0, e1), tkns1
@@ -123,12 +128,29 @@ and parse_expd tkns =
         let e, tkns4 = parse_expe tkns3 in
         Fix (x, typ, e), tkns4
       | _ -> raise (ParseFailure "expected 'is'"))
+  | "case"::tkns' ->
+      let tkns1, "of"::tkns2 = split_while ((<>) "of") tkns' in
+      let e, tkns1' = parse_expe tkns1 in
+      let cs = parse_cases tkns2 in
+      (match tkns1', cs with
+      | _, [] -> raise (ParseFailure "case cannot be empty")
+      | [], _ -> Case (e, cs), []
+      | _ -> raise (ParseFailure "expected 'of'"))
   | t::tkns' ->
-      try
+      (try
         let i = int_of_string t in
         Int i, tkns'
       with Failure _ ->
-        Var t, tkns';;
+        Var t, tkns')
+and parse_cases tkns =
+  match tkns with
+  | [] -> []
+  | "|"::p::"->"::tkns' ->
+      let ptn = parse_pattern p in
+      let e, tkns'' = parse_expe tkns' in
+      (ptn, e)::parse_cases tkns''
+  | _ -> raise (ParseFailure ("expected '|', found" ^ (List.hd tkns)));;
+
 
 
 let parse tkns = parse_cmd tkns |> fst;;

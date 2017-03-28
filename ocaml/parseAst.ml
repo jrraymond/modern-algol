@@ -1,4 +1,5 @@
-open Typ;;
+include Typ;;
+
 
 
 type exp =
@@ -8,7 +9,7 @@ type exp =
   | Abs of string * typ * exp
   | App of exp * exp
   | Cmd of cmd
-  | Case of exp * (int * exp) list
+  | Case of exp * (pattern * exp) list
 and cmd =
   | Ret of exp
   | Bnd of string * exp * cmd
@@ -17,8 +18,6 @@ and cmd =
   | DclT of string * exp
   | Get of string
   | Set of string * exp;;
-
-
 
 
 let rec string_of_exp e =
@@ -33,11 +32,10 @@ let rec string_of_exp e =
       string_of_exp e0 ^ "(" ^ string_of_exp e1 ^ ")"
   | Cmd m -> "cmd " ^ string_of_cmd m
   | Case (e, cases) ->
-      let cs = List.map (fun (i, e) ->
-        Printf.sprintf "\n| %i -> %s" i (string_of_exp e))
+      let cs = List.map (fun (p, e) ->
+        Printf.sprintf "\n| %s -> %s" (string_of_pattern p) (string_of_exp e))
         cases
-      in
-      "case " ^ string_of_exp e ^ " of " ^ cs
+      in "case " ^ string_of_exp e ^ " of " ^ Utils.intercalate "" cs
 and string_of_cmd c =
   match c with
   | Ret e -> "ret " ^ string_of_exp e

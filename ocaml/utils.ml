@@ -15,7 +15,13 @@ let split_while p =
     | _ -> List.rev ls, xs
   in go [];;
  
- 
+let rec drop_while p i xs =
+  match i, xs with
+  | 0, _ -> xs
+  | _, x::xs' when p x -> drop_while p (i - 1) xs'
+  | _ -> xs;;
+
+
 
 
 let list_of_queue (q : 'a Queue.t) : 'a list =

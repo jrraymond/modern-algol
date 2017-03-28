@@ -40,6 +40,7 @@ let cmd_tests = List.map (fun (arg, ans) ->
   ; ("ret \\x:int.x", Ret (Abs ("x", IntTyp, Var "x")))
   ; ("ret (\\x:int.x)(0)", Ret (App (Abs ("x", IntTyp, Var "x"), Int 0)))
   ; ("ret cmd ret 0", Ret (Cmd (Ret (Int 0))))
+  ; ("ret case x of | 0 -> 0 | x -> x", Ret (Case (Var "x", [(Lit 0, Int 0); (Binder "x", Var "x")])))
   ];;
 
 

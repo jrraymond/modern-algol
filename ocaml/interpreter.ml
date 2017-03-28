@@ -24,6 +24,13 @@ let rec db_of_exp e ctx =
       let e0' = db_of_exp e0 (x::ctx) in
       Ast.Abs (x, t, e0')
   | ParseAst.Cmd m -> Ast.Cmd (db_of_cmd m ctx)
+  | ParseAst.Case (e, cs) ->
+      let cs' = List.map (fun (p, ei) ->
+        (match p with
+        | Ast.Lit _ -> p, db_of_exp ei ctx
+        | Ast.Binder s -> p, db_of_exp ei (s::ctx)))
+        cs
+      in Ast.Case ((db_of_exp e ctx), cs')
 and db_of_cmd m ctx =
   match m with
   | ParseAst.Ret e -> Ast.Ret (db_of_exp e ctx)

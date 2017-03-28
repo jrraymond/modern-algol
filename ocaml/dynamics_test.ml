@@ -22,7 +22,7 @@ let exp_value_tests = List.map (fun v ->
 
 (* test single step of expressions *)
 let exp_step_tests = List.map (fun (arg, ans) ->
-  let ctx = [Int 0] in
+  let ctx = [("x", Int 0)] in
   let s = string_of_exp arg in
   let res = step_exp ctx arg in
   let m = string_of_exp res ^ "<>" ^ string_of_exp ans in

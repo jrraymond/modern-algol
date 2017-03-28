@@ -1,6 +1,14 @@
 type typ = IntTyp | FunTyp of typ * typ | CmdTyp
 
 
+type pattern = Lit of int | Binder of string;;
+
+let string_of_pattern p =
+  match p with
+  | Lit i -> string_of_int i
+  | Binder s -> s;;
+
+
 let rec string_of_typ t =
   match t with
   | IntTyp -> "int"
