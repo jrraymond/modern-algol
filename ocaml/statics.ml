@@ -67,6 +67,32 @@ let rec type_check_exp ctx asg e =
       (match type_check_cmd ctx asg m with
       | Ok _ -> Ok CmdTyp
       | Error e -> Error e)
+  | Case (e0, cs) ->
+      (match type_check_exp ctx asg e0 with
+      | Error e -> Error e
+      | Ok t -> type_check_cases t ctx asg cs)
+and type_check_cases t ctx asg =
+  let rec tcc_h mt cs =
+    match cs with
+    | [] ->
+        (match mt with
+        | None -> raise (Failure "empty case")
+        | Some t -> Ok t)
+    | (p, e)::cs' -> 
+        let ctx' = 
+          match p with
+          | Lit i -> ctx
+          | Binder x -> t::ctx
+        in
+        (match mt, type_check_exp ctx' asg e with
+        | None, Ok t1 -> tcc_h (Some t1) cs'
+        | Some t0, Ok t1 when t0 = t1 -> tcc_h mt cs'
+        | Some t0, Ok t1 ->
+            let t0s = string_of_typ t0 in
+            let t1s = string_of_typ t1 in
+            Error (Printf.sprintf "expected %s, found %s" t0s t1s)
+        | _, e -> e)
+  in tcc_h None
 and type_check_cmd ctx asg m =
   match m with
   | Ret e ->

@@ -29,6 +29,7 @@ let well_typed_exp_tests = List.map (fun (ctx, exp, ans) ->
   ; (ctx_of_list [], App (id_fun, Int 0), Ok IntTyp)
   ; (ctx_of_list [], Fix ("x", IntTyp, App (id_fun, Var { label = "x"; index = 0 })), Ok IntTyp)
   ; (ctx_of_list [], Cmd (Ret (Int 0)), Ok CmdTyp)
+  ; (ctx_of_list [], Case (Int 0, [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })]), Ok IntTyp)
   ];;
 
 
