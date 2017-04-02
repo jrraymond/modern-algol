@@ -1,5 +1,4 @@
 open Result;;
-open Ast;;
 open Typ;;
 
 
@@ -41,50 +40,58 @@ let rem_from_ctx ctx =
   | _::ctx' -> ctx'
 
 
-let rec type_check_exp ctx asg e = 
+let rec type_exp ctx asg e = 
   match e with
-  | Int i -> Ok IntTyp
-  | Var v -> get_from_ctx v.label ctx v.index
-  | Fix (x, t, e0) ->
-      let ctx' = add_to_ctx ctx t in
-      type_check_exp ctx' asg e0
-  | Abs (x, t, e0) ->
-      let ctx' = add_to_ctx ctx t in
-      (match type_check_exp ctx' asg e0 with
-      | Ok t0 -> Ok (FunTyp (t, t0) )
+  | Ast.Int i -> Ok TypedAst.Int i
+  | Ast.Var v ->
+      (match get_from_ctx v.label ctx v.index with
+      | Ok t -> Ok (TypedAst.Var (v, t))
       | e -> e)
-  | App (e0, e1) ->
-      let r0 = type_check_exp ctx asg e0 in
-      (match r0 with
-      | Ok (FunTyp (t0a, t0b)) ->
-          (match type_check_exp ctx asg e1 with
-          | Ok t1 when t0a = t1 -> Ok t0b
-          | Ok t1 -> Error (string_of_typ t1 ^".")
-          | e -> e)
-      | Ok t0 -> Error ("expected function, found " ^ string_of_typ t0)
+  | Ast.Fix (x, t, e0) ->
+      let ctx' = add_to_ctx ctx t in
+      (match type_exp ctx' asg e0 with
+      | Ok t0 -> Ok (TypedAst.Fix (x, t, e0, t0))
       | e -> e)
-  | Cmd m ->
-      (match type_check_cmd ctx asg m with
-      | Ok _ -> Ok CmdTyp
-      | Error e -> Error e)
-  | Case (e0, cs) ->
-      (match type_check_exp ctx asg e0 with
+  | Ast.Abs (x, t, e0) ->
+      let ctx' = add_to_ctx ctx t in
+      (match type_exp ctx' asg e0 with
+      | Ok t0 -> Ok (TypedAst.Abs (x, t, e0, FunTyp (t, t0))
+      | e -> e)
+  | Ast.App (e0, e1) ->
+      (match type_exp ctx asg e0 with
       | Error e -> Error e
-      | Ok t -> type_check_cases t ctx asg cs)
-and type_check_cases t ctx asg =
+      | Ok te0 ->
+        (match TypedAst.typ_of_exp te0 with
+        | FunTyp (t0a, t0b) as t0 ->
+            (match type_exp ctx asg e1 with
+            | Ok te1 ->
+                let t1 = TypedAst.typ_of_exp te1 in
+                if t0 = t1
+                then Ok (TypedAst.App (e0, e1, t0b))
+                else Error (string_of_typ t1 ^ "<>" string_of_typ t0a)
+            | e -> e)
+        | t0 -> Error ("expected function, found " ^ string_of_typ t0)))
+  | Ast.Cmd m ->
+      (match type_cmd ctx asg m with
+      | Ok tm -> Ok (TypedAst.Cmd tm)
+      | Error e -> Error e)
+  | Ast.Case (e0, cs) ->
+      (match type_exp ctx asg e0 with
+      | Error e -> Error e
+      | Ok te0 ->
+          let t0 = TypedAst.typ_of_exp te0 in
+          type_cases t0 ctx asg cs)
+and type_cases t ctx asg =
   let rec tcc_h mt cs =
     match cs with
-    | [] ->
-        (match mt with
-        | None -> raise (Failure "empty case")
-        | Some t -> Ok t)
+    | [] -> from_optional (fun () -> raise (Failure "empty case"))
     | (p, e)::cs' -> 
         let ctx' = 
           match p with
           | Lit i -> ctx
           | Binder x -> t::ctx
         in
-        (match mt, type_check_exp ctx' asg e with
+        (match mt, type_exp ctx' asg e with
         | None, Ok t1 -> tcc_h (Some t1) cs'
         | Some t0, Ok t1 when t0 = t1 -> tcc_h mt cs'
         | Some t0, Ok t1 ->
@@ -93,58 +100,58 @@ and type_check_cases t ctx asg =
             Error (Printf.sprintf "expected %s, found %s" t0s t1s)
         | _, e -> e)
   in tcc_h None
-and type_check_cmd ctx asg m =
+and type_cmd ctx asg m =
   match m with
-  | Ret e ->
-      (match type_check_exp ctx asg e with
+  | Ast.Ret e ->
+      (match type_exp ctx asg e with
       | Ok IntTyp -> Ok CmdTyp
       | Ok t -> Error (string_of_typ t)
       | e -> e)
-  | Bnd (x, e, m0) ->
-      (match type_check_exp ctx asg e with
+  | Ast.Bnd (x, e, m0) ->
+      (match type_exp ctx asg e with
       | Ok CmdTyp ->
           let ctx' = add_to_ctx ctx IntTyp in
-          type_check_cmd ctx' asg m0
+          type_cmd ctx' asg m0
       | Ok t -> Error ("expected Cmd, found " ^ string_of_typ t)
       | e -> e)
-  | BndT _ -> raise (Failure "toplevel")
-  | DclT _ -> raise (Failure "toplevel")
-  | Dcl (a, e, m0) ->
-      (match type_check_exp ctx asg e with
+  | Ast.BndT _ -> raise (Failure "toplevel")
+  | Ast.DclT _ -> raise (Failure "toplevel")
+  | Ast.Dcl (a, e, m0) ->
+      (match type_exp ctx asg e with
       | Ok IntTyp -> 
           let () = Hashtbl.add asg a IntTyp in
-          (match type_check_cmd ctx asg m0 with
+          (match type_cmd ctx asg m0 with
           | Ok CmdTyp ->
               let () = Hashtbl.remove asg a in
               Ok CmdTyp
           | e -> e)
       | e -> e)
-  | Get x ->
+  | Ast.Get x ->
       if Hashtbl.mem asg x
       then Ok CmdTyp
       else Error "Assignable x not in scope"
-  | Set (x, e) ->
+  | Ast.Set (x, e) ->
       if Hashtbl.mem asg x
       then 
-        (match type_check_exp ctx asg e with
+        (match type_exp ctx asg e with
         | Ok IntTyp -> Ok CmdTyp
         | e -> e)
       else Error "Assignable x not in scope";;
 
 
-let type_check_toplevel ctx asg m =
+let type_toplevel ctx asg m =
   match m with
-  | BndT (x, e) ->
-      (match type_check_exp ctx asg e with
+  | Ast.BndT (x, e) ->
+      (match type_exp ctx asg e with
       | Ok t -> Ok (t, t::ctx)
       | Error e -> Error e)
-  | DclT (a, e) -> 
-      (match type_check_exp ctx asg e with
+  | Ast.DclT (a, e) -> 
+      (match type_exp ctx asg e with
       | Ok t ->
           let () = Hashtbl.add asg a t in
           Ok (CmdTyp, ctx)
       | Error e -> Error e)
   |  _ ->
-      (match type_check_cmd ctx asg m with
+      (match type_cmd ctx asg m with
       | Ok t -> Ok (t, ctx)
       | Error e -> Error e);;

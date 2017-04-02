@@ -1,4 +1,22 @@
 open Ast;;
+open TypedAst;;
+
+let llctx = Llvm.global_context () in
+let i32_t = Llvm.i32_type llctx;;
+
+
+let rec gen_exp llm e =
+  match e with
+  | Int i -> Llvm.const_float i32_t i
+  | App (e0, e1) -> gen_cmd m
+  | Abs (x, t, e1) -> 
+      let ret_t 
+      let ft = LLvm.function_type ret_t arg_t in
+
+and gen_cmd llm m =
+  match m with
+  | Ret e -> gen_exp e;;
+
 
 let () = 
   let llctx = Llvm.global_context () in

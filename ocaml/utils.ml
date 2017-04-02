@@ -36,4 +36,14 @@ let subset_of a b =
       else raise Not_found
     ) a
     in true
-  with Not_found -> false
+  with Not_found -> false;;
+
+let omap f s =
+  match s with
+  None -> None
+  Some x -> Some (f x);;
+
+let from_opt f o =
+  match o with
+  | None -> f ()
+  | Some x -> x;;
