@@ -1,4 +1,4 @@
-include Typ;;
+open Typ;;
 
 
 

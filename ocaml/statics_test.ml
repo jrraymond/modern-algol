@@ -2,6 +2,7 @@ open Ast;;
 open OUnit2;;
 open Result;;
 open Statics;;
+open Typ;;
 
 
 let id_fun = Abs ("x", IntTyp, Var { label = "x"; index = 0});;

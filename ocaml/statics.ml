@@ -40,6 +40,14 @@ let rem_from_ctx ctx =
   | _::ctx' -> ctx'
 
 
+let typ_err s0 e t1 =
+  Printf.sprintf "type of '%s' is '%s', expected '%s'"
+    (Ast.string_of_exp e)
+    s0
+    (string_of_typ t1);;
+
+let typ_mismatch e t0 t1 = typ_err (string_of_typ t0) e t1;;
+
 let rec type_exp ctx asg e = 
   match e with
   | Ast.Int i -> Ok (TypedAst.Int i)
@@ -66,15 +74,15 @@ let rec type_exp ctx asg e =
       | Error e -> Error e
       | Ok te0 ->
         (match TypedAst.typ_of_exp te0 with
-        | FunTyp (t0a, t0b) as t0 ->
+        | FunTyp (t0a, t0b) ->
             (match type_exp ctx asg e1 with
             | Ok te1 ->
                 let t1 = TypedAst.typ_of_exp te1 in
-                if t0 = t1
+                if t0a = t1
                 then Ok (TypedAst.App (te0, te1, t0b))
-                else Error (string_of_typ t1 ^ "<>" ^ string_of_typ t0a)
+                else Error (typ_mismatch e1 t1 t0a)
             | e -> e)
-        | t0 -> Error ("expected function, found " ^ string_of_typ t0)))
+        | t0 -> Error (typ_err "function" e0 t0)))
   | Ast.Cmd m ->
       (match type_cmd ctx asg m with
       | Ok tm ->
@@ -123,7 +131,7 @@ and type_cmd ctx asg m =
       (match type_exp ctx asg e with
       | Ok te -> 
           (match TypedAst.typ_of_exp te with
-          | IntTyp -> Ok (TypedAst.Ret (te, IntTyp))
+          | IntTyp -> Ok (TypedAst.Ret (te, CmdTyp))
           | t -> Error (string_of_typ t))
       | Error e -> Error e)
   | Ast.Bnd (x, e, m0) ->
@@ -161,11 +169,9 @@ and type_cmd ctx asg m =
             | e -> e)
       | Error e -> Error e)
   | Ast.Get x ->
-      (try
-        let t = Hashtbl.find asg x in
-        Ok (TypedAst.Get (x, t))
-      with Not_found ->
-        Error ("Assignable " ^ x ^ " not in scope"))
+        if Hashtbl.mem asg x
+        then Ok (TypedAst.Get (x, CmdTyp))
+        else Error ("Assignable " ^ x ^ " not in scope")
   | Ast.Set (x, e) ->
       if Hashtbl.mem asg x
       then 
