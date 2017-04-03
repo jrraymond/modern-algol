@@ -1,5 +1,6 @@
 open Ast;;
 open Dynamics;;
+open Typ;;
 open OUnit2;;
 
 

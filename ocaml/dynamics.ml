@@ -1,5 +1,6 @@
 open Ast;;
 open Utils;;
+open Typ;;
 
 
 exception Stuck;;
