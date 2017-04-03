@@ -18,7 +18,7 @@ and cmd =
   | Set of string * exp * typ;;
 
 
-let rec typ_of_exp e =
+let typ_of_exp (e : exp) : typ =
   match e with
   | Var (_, t) -> t
   | Int _ -> IntTyp
@@ -29,7 +29,7 @@ let rec typ_of_exp e =
   | Cmd (_, t) -> t;;
 
 
-let rec typ_of_cmd m =
+let typ_of_cmd m =
   match m with 
   | Ret (_, t) -> t
   | Bnd (_, _, _, t) -> t

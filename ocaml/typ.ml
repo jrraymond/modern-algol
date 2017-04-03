@@ -1,6 +1,8 @@
 type typ = IntTyp | FunTyp of typ * typ | CmdTyp
 
 
+type var = { label : string; index : int }
+
 type pattern = Lit of int | Binder of string;;
 
 let string_of_pattern p =

@@ -20,7 +20,8 @@ let string_of_typ_result =
 let well_typed_exp_tests = List.map (fun (ctx, exp, ans) ->
   let vs = string_of_ctx ctx ^ "," ^ string_of_exp exp in
   let asg = asg_of_list [] in
-  let res = type_check_exp ctx asg exp in
+  let te = type_exp ctx asg exp in
+  let res = Utils.rmap TypedAst.typ_of_exp te in
   let m = string_of_typ_result res ^ "<>" ^ string_of_typ_result ans in
   vs >:: (fun _ -> assert_equal ~msg:m ans res))
   [ (ctx_of_list [IntTyp], Var { label = "x"; index = 0 }, Ok IntTyp)
@@ -36,7 +37,8 @@ let well_typed_exp_tests = List.map (fun (ctx, exp, ans) ->
 let well_typed_cmd_tests = List.map (fun (asg, cmd, ans) ->
   let vs = string_of_asg asg ^ "," ^ string_of_cmd cmd in
   let ctx = ctx_of_list [] in
-  let res = type_check_cmd ctx asg cmd in
+  let tm = type_cmd ctx asg cmd in
+  let res = Utils.rmap TypedAst.typ_of_cmd tm in
   let m = string_of_typ_result res ^ " <> " ^ string_of_typ_result ans in
   vs >:: (fun _ -> assert_equal ~msg:m ans res))
   [ (asg_of_list [], Ret (Int 0), Ok CmdTyp)

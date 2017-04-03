@@ -40,10 +40,19 @@ let subset_of a b =
 
 let omap f s =
   match s with
-  None -> None
-  Some x -> Some (f x);;
+  | None -> None
+  | Some x -> Some (f x);;
+
+
+let rmap f r =
+  match r with
+  | Ok x -> Ok (f x)
+  | Error e -> Error e;;
+
 
 let from_opt f o =
   match o with
   | None -> f ()
   | Some x -> x;;
+
+

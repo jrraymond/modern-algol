@@ -2,8 +2,6 @@ include Typ;;
 
 
 
-type var = { label : string; index : int }
-
 
 type exp =
   | Var of var
