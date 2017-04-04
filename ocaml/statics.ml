@@ -191,17 +191,16 @@ let type_toplevel ctx asg m =
       (match type_exp ctx asg e with
       | Ok te ->
           let t = TypedAst.typ_of_exp te in
-          Ok (t, t::ctx)
+          if t <> CmdTyp
+          then Error ("expected CmdTyp, got " ^ string_of_typ t)
+          else Ok (t, t::ctx)
       | Error e -> Error e)
   | Ast.DclT (a, e) -> 
       (match type_exp ctx asg e with
       | Ok te ->
           let t = TypedAst.typ_of_exp te in
-          if t <> CmdTyp
-          then Error ("expected CmdTyp, got " ^ string_of_typ t)
-          else
-            let () = Hashtbl.add asg a t in
-            Ok (CmdTyp, ctx)
+          let () = Hashtbl.add asg a t in
+          Ok (t, ctx)
       | Error e -> Error e)
   |  _ ->
       (match type_cmd ctx asg m with

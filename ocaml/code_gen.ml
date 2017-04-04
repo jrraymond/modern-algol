@@ -1,4 +1,3 @@
-open Ast;;
 open TypedAst;;
 
 let llctx = Llvm.global_context () in

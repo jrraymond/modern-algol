@@ -11,7 +11,7 @@ let rec db_of_exp e ctx =
   match e with
   | ParseAst.Var label -> 
       let index = get_debruijn ctx label in
-      Ast.Var { Ast.label; Ast.index }
+      Ast.Var { Typ.label; Typ.index }
   | ParseAst.Int i -> Ast.Int i
   | ParseAst.Fix (x, t, e0) ->
       let e0' = db_of_exp e0 (x::ctx) in
@@ -27,8 +27,8 @@ let rec db_of_exp e ctx =
   | ParseAst.Case (e, cs) ->
       let cs' = List.map (fun (p, ei) ->
         (match p with
-        | Ast.Lit _ -> p, db_of_exp ei ctx
-        | Ast.Binder s -> p, db_of_exp ei (s::ctx)))
+        | Typ.Lit _ -> p, db_of_exp ei ctx
+        | Typ.Binder s -> p, db_of_exp ei (s::ctx)))
         cs
       in Ast.Case ((db_of_exp e ctx), cs')
 and db_of_cmd m ctx =
@@ -60,7 +60,6 @@ let is_cmd tkns =
 
 let rec run mem mem_t ctx ctx_t =
   while true do
-    (*let () = Printf.printf "%s | %s\n" (Statics.string_of_asg mem_t) (Statics.string_of_ctx ctx_t) in*)
     let inp = read_line () in
     let tkns = AstLexer.lex inp in
     try 
@@ -68,24 +67,25 @@ let rec run mem mem_t ctx ctx_t =
       then
         let m, _ = AstParser.parse_cmd tkns in
         let cmd = db_of_cmd m (List.map fst ctx) in
-        let ctx_t' =
-          (match Statics.type_check_toplevel ctx_t mem_t cmd with
-          | Error e -> let () = Printf.printf "%s\n" e in ctx_t
-          | Ok (t, ctx_t') ->
-              let () = Printf.printf ": %s\n" (Ast.string_of_typ t) in
-              ctx_t')
-        in
-        let v, ctx' = Dynamics.eval_toplevel mem ctx cmd in
-        Printf.printf "> %s\n" (Ast.string_of_cmd v);
-        run mem mem_t ctx' ctx_t'
+        (match Statics.type_toplevel ctx_t mem_t cmd with
+        | Error e ->
+            let () = Printf.printf "%s\n" e in
+            run mem mem_t ctx ctx_t
+        | Ok (t, ctx_t') ->
+            let () = Printf.printf ": %s\n" (Typ.string_of_typ t) in
+            let v, ctx' = Dynamics.eval_toplevel mem ctx cmd in
+            Printf.printf "> %s\n" (Ast.string_of_cmd v);
+            run mem mem_t ctx' ctx_t')
       else
         let e, _ = AstParser.parse_expe tkns in
         let exp = db_of_exp e (List.map fst ctx) in
-        (match Statics.type_check_exp ctx_t mem_t exp with
+        (match Statics.type_exp ctx_t mem_t exp with
         | Error e -> Printf.printf "%s\n" e
-        | Ok t -> Printf.printf ": %s\n" (Ast.string_of_typ t));
-        let e' = Dynamics.eval_exp ctx exp in
-        Printf.printf "> %s\n" (Ast.string_of_exp e');
+        | Ok te ->
+          let t = TypedAst.typ_of_exp te in
+          let () = Printf.printf ": %s\n" (Typ.string_of_typ t) in
+          let e' = Dynamics.eval_exp ctx exp in
+          Printf.printf "> %s\n" (Ast.string_of_exp e'));
         run mem mem_t ctx ctx_t
     with
     | AstParser.ParseFailure msg ->
