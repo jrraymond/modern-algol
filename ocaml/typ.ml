@@ -1,7 +1,8 @@
-type typ = IntTyp | FunTyp of typ * typ | CmdTyp
+type typ = IntTyp | FunTyp of typ * typ | CmdTyp;;
 
+type prim = Add | Sub;;
 
-type var = { label : string; index : int }
+type var = { label : string; index : int };;
 
 type pattern = Lit of int | Binder of string;;
 

@@ -8,6 +8,7 @@ type exp =
   | App of exp * exp * typ
   | Cmd of cmd * typ
   | Case of exp * (pattern * exp) list * typ
+  | Op of prim * exp list * typ
 and cmd =
   | Ret of exp * typ
   | Bnd of string * exp * cmd * typ

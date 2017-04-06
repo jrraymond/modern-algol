@@ -1,8 +1,6 @@
 open Typ;;
 
 
-
-
 type exp =
   | Var of var
   | Int of int
@@ -19,7 +17,6 @@ and cmd =
   | DclT of string * exp
   | Get of string
   | Set of string * exp;;
-
 
 
 let rec string_of_exp e =
