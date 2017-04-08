@@ -1,3 +1,10 @@
+let id_src = ref 0;;
+
+let next_id () =
+  let i = !id_src in
+  id_src := i + 1;
+  i;;
+
 
 let transform env e =
   let rec go i env defs e =

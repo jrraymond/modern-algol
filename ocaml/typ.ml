@@ -26,3 +26,9 @@ let rec base_typ_of_string s =
   | "int" -> IntTyp
   | "cmd" -> CmdTyp
   | _ -> raise (Failure "base_typ_of_string");;
+
+
+let string_of_prim p =
+  match p with
+  | Add -> "+"
+  | Sub -> "-";;

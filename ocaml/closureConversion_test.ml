@@ -6,12 +6,15 @@ module T = TypedAst;;
 module F = FlatAst;;
 
 
+(* TODO this should be more robust *)
+let cmp_transform a b = a = b;;
 
-let transform_tests = List.map (fun (exp, ans) ->
-  let vs = "test" in
-  let res = transform [] exp in
+
+let transform_tests = List.map (fun (exp0, ans) ->
+  let vs = T.string_of_exp exp0 in
+  let res = transform [] exp0 in
   let m = "TODO" in
-  vs >:: (fun _ -> assert_equal ~msg:m ans res))
+  vs >:: (fun _ -> assert_equal ~cmp:cmp_transform ~msg:m ans res))
   [ (T.Abs ("x", IntTyp,
       T.Abs ("y", IntTyp,
         T.Op (Add,
@@ -20,11 +23,11 @@ let transform_tests = List.map (fun (exp, ans) ->
           IntTyp)
        , FunTyp (IntTyp, IntTyp))
       , FunTyp (IntTyp, FunTyp (IntTyp, IntTyp)))
-    , (F.Call 0
+    , (F.Fun 0
       , [ { F.var = "x"
           ; F.arg = IntTyp
           ; F.env = []
-          ; F.body = F.Call 1
+          ; F.body = F.Fun 1
           ; F.t = FunTyp (IntTyp, FunTyp (IntTyp, IntTyp))
           }
         ; { F.var = "y"
