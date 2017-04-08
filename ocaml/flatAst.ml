@@ -23,10 +23,10 @@ and cmd =
 
 type def =
   { var : string
-  ; arg : typ
+  ; argt : typ
   ; env : (string * typ) list
   ; body : exp
-  ; t : typ
+  ; typ : typ
   };;
 
 

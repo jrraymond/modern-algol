@@ -1,3 +1,5 @@
+module T = TypedAst;;
+module F = FlatAst;;
 let id_src = ref 0;;
 
 let next_id () =
@@ -5,18 +7,32 @@ let next_id () =
   id_src := i + 1;
   i;;
 
+let free_vars e = [];;
+
 
 let transform env e =
-  let rec go i env defs e =
+  let rec go env defs e =
     match e with
-    | TypedAst.Var (v, t) -> FlatAst.Var (v, t), defs
-    | TypedAst.Int i -> FlatAst.Int i, defs
-    | TypedAst.App (e0, e1, t) ->
-        let e0', defs0 = go i env defs e0 in
-        let e1', defs1 = go i env defs e1 in
-        FlatAst.App (e0', e1', t), defs0 @ defs1
-    | TypedAst.Fix (x, tx, e0, t) ->
-        let e0', defs0 = go (i + 1) env defs e0 in
-        FlatAst.Fix (x, tx, e0', t), defs0
+    | T.Var (v, t) -> F.Var (v, t), defs
+    | T.Int i -> F.Int i, defs
+    | T.App (e0, e1, t) ->
+        let e0', defs0 = go env defs e0 in
+        let e1', defs1 = go env defs e1 in
+        F.App (e0', e1', t), defs0 @ defs1
+    | T.Fix (x, tx, e0, t) ->
+        let e0', defs0 = go env defs e0 in
+        F.Fix (x, tx, e0', t), defs0
+    | T.Abs (var, argt, e0, typ) ->
+        let i = next_id () in
+        let body, defs' = go env defs e0 in
+        let fvs = free_vars e0 in
+        let d = { F.var; F.argt; F.env = (var, argt)::fvs; F.body; F.typ } in
+        F.Fun i, d::defs'
+    | T.Op (p, es, t) ->
+        let (env, defs'), es' = Utils.accum_left (fun (env, defs) ei ->
+          let ei', defs' = go env defs ei in
+          ((env, defs'), ei')) (env, defs) es
+        in
+        F.Op (p, es', t), defs'
     | _ -> raise (Failure "unimplimented")
-  in go 0 env [] e;;
+  in go env [] e;;

@@ -56,3 +56,11 @@ let from_opt f o =
   | Some x -> x;;
 
 
+let accum_left f0 z0 xs0 =
+  let rec go ys f z xs =
+    match xs with
+    | [] -> z, List.rev ys
+    | x::xs' ->
+        let z', y = f z x in
+        go (y::ys) f z' xs'
+  in go [] f0 z0 xs0;;

@@ -25,20 +25,20 @@ let transform_tests = List.map (fun (exp0, ans) ->
       , FunTyp (IntTyp, FunTyp (IntTyp, IntTyp)))
     , (F.Fun 0
       , [ { F.var = "x"
-          ; F.arg = IntTyp
+          ; F.argt = IntTyp
           ; F.env = []
           ; F.body = F.Fun 1
-          ; F.t = FunTyp (IntTyp, FunTyp (IntTyp, IntTyp))
+          ; F.typ = FunTyp (IntTyp, FunTyp (IntTyp, IntTyp))
           }
         ; { F.var = "y"
-          ; F.arg = IntTyp
+          ; F.argt = IntTyp
           ; F.env = [("x", IntTyp)]
           ; F.body = 
             F.Op (Add,
               [ F.Var ({ label = "x"; index = 1 }, IntTyp)
               ; F.Var ({ label = "y"; index = 0 }, IntTyp) ],
               IntTyp)
-          ; t = FunTyp (IntTyp, IntTyp)
+          ; typ = FunTyp (IntTyp, IntTyp)
           }
         ]
       )
