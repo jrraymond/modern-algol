@@ -7,8 +7,6 @@ let next_id () =
   id_src := i + 1;
   i;;
 
-let free_vars e = [];;
-
 
 let transform env e =
   let rec go env defs e =
@@ -24,9 +22,9 @@ let transform env e =
         F.Fix (x, tx, e0', t), defs0
     | T.Abs (var, argt, e0, typ) ->
         let i = next_id () in
-        let body, defs' = go env defs e0 in
-        let fvs = free_vars e0 in
-        let d = { F.var; F.argt; F.env = (var, argt)::fvs; F.body; F.typ } in
+        let body, defs' = go ((var, argt)::env) defs e0 in
+        let fvs = T.free_vars_exp 0 e0 in
+        let d = { F.var; F.argt; F.env = fvs; F.body; F.typ } in
         F.Fun i, d::defs'
     | T.Op (p, es, t) ->
         let (env, defs'), es' = Utils.accum_left (fun (env, defs) ei ->

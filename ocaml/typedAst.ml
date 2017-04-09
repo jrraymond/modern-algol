@@ -19,6 +19,33 @@ and cmd =
   | Set of string * exp * typ;;
 
 
+let rec free_vars_exp i e =
+  match e with
+  | Var (v, t) when v.index > i -> [(v.label, t)]
+  | Var _ -> []
+  | Int _ -> []
+  | Fix (x, _, e0, _) ->
+      free_vars_exp (i + 1) e0
+  | Abs (x, _, e0, _) ->
+      free_vars_exp (i + 1) e0
+  | App (e0, e1, _) ->
+      free_vars_exp i e0 @ free_vars_exp i e1
+  | Cmd (m, t) ->
+      free_vars_cmd i m
+  | Case (e, cs, _) ->
+      let evs = free_vars_exp i e in
+      evs @ List.fold_left (fun vs (p, e0) ->
+        vs @ match p with
+        | Lit _ -> free_vars_exp i e0
+        | Binder x -> free_vars_exp (i + 1) e0) [] cs
+  | Op (_, es, _) ->
+      List.fold_left (fun vs e0 -> vs @ free_vars_exp i e0) [] es
+and free_vars_cmd i m =
+  match m with
+  | Ret (e, _) -> free_vars_exp i e
+  | _ -> raise (Failure "uniplemented");;
+
+
 let typ_of_exp (e : exp) : typ =
   match e with
   | Var (_, t) -> t

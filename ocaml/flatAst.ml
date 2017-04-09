@@ -62,7 +62,11 @@ let rec string_of_exp e =
       let es = string_of_exp e in
       let ts = string_of_typ t in
       Printf.sprintf "(case %s of %s) : %s" es (Utils.intercalate "" cs) ts
-  | Op _ -> raise (Failure "todo");
+  | Op (p, args, t) ->
+      let ps = string_of_prim p in
+      let s = List.map string_of_exp args |> Utils.intercalate " " in
+      let ts = string_of_typ t in
+      Printf.sprintf "%s %s : %s" ps s ts
 and string_of_cmd c =
   match c with
   | Ret (e, t) ->
@@ -90,3 +94,14 @@ and string_of_cmd c =
   | Get (a, t) -> "@" ^ a ^ " : " ^ string_of_typ t
   | Set (a, e, t) -> a ^ " := " ^ string_of_exp e ^ " : " ^ string_of_typ t;;
 
+
+
+let string_of_def d =
+  let ats = string_of_typ d.argt in
+  let es = List.map (fun (v, t) ->
+    Printf.sprintf "%s:%s" v (string_of_typ t))
+    d.env |> Utils.intercalate ","
+  in
+  let bs = string_of_exp d.body in
+  let ts = string_of_typ d.typ in
+  Printf.sprintf "(%s:%s [%s] %s) : %s" d.var ats es bs ts;;
