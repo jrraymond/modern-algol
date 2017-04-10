@@ -10,6 +10,7 @@ type exp =
   | App of exp * exp
   | Cmd of cmd
   | Case of exp * (pattern * exp) list
+  | Op of prim * exp list
 and cmd =
   | Ret of exp
   | Bnd of string * exp * cmd
@@ -36,6 +37,10 @@ let rec string_of_exp e =
         Printf.sprintf "\n| %s -> %s" (string_of_pattern p) (string_of_exp e))
         cases
       in "case " ^ string_of_exp e ^ " of " ^ Utils.intercalate "" cs
+  | Op (p, args) ->
+      let ps = string_of_prim p in
+      let s = List.map string_of_exp args |> Utils.intercalate " " in
+      Printf.sprintf "%s %s" ps s
 and string_of_cmd c =
   match c with
   | Ret e -> "ret " ^ string_of_exp e

@@ -49,6 +49,7 @@ let rec lex_h chars acc tkns =
   | '-'::'>'::rem -> lex_h rem [] ("->"::cons_ne acc tkns)
   | '<'::'-'::rem -> lex_h rem [] ("<-"::cons_ne acc tkns)
   | ':'::'='::rem -> lex_h rem [] (":="::cons_ne acc tkns)
+  | '*'::'*'::rem -> lex_h rem [] ("**"::cons_ne acc tkns)
   | '.'::rem -> lex_h rem [] ("."::cons_ne acc tkns)
   | '@'::rem -> lex_h rem [] ("@"::cons_ne acc tkns)
   | ':'::rem -> lex_h rem [] (":"::cons_ne acc tkns)

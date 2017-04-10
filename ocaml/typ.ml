@@ -1,6 +1,6 @@
 type typ = IntTyp | FunTyp of typ * typ | CmdTyp;;
 
-type prim = Add | Sub;;
+type prim = Add | Sub | Mult | Div | Mod | Pow | Neg;;
 
 type var = { label : string; index : int };;
 
@@ -31,4 +31,9 @@ let rec base_typ_of_string s =
 let string_of_prim p =
   match p with
   | Add -> "+"
-  | Sub -> "-";;
+  | Sub -> "-"
+  | Neg -> "-"
+  | Mult -> "*"
+  | Div -> "/"
+  | Mod -> "%"
+  | Pow -> "**" ;;

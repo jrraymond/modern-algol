@@ -52,13 +52,15 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
  * violates that. 
  *  e ::= e e | (e) | <int> | fix x:t is e | \x:t.e | cmd m
  *
- * We can't use a true recursive descent parser because we want
- * left-associativity and left-recursion. So we use a shunting yard algorithm
- * when we want left-associative application.
- *
  *  e ::= d+
  *  d ::= (e) | <int> | fix x:t is e | \x:t.e | cmd m
  *      | case e of \(\| p -> e\)+
+ *      | p {b0 p}+ | p {b1 p}+
+ *  b0 ::= + | -
+ *  b1 ::= * | / | %
+ *  b2 ::= **
+ *  u0 ::= -
+ *  p ::= u0 p | e
  *
  * The syntax for commands is
  *  m ::= ret e | bnd x <- e ; m | dcl a := e in m | @ a | a := e
