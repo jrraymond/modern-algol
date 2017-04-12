@@ -37,3 +37,13 @@ let string_of_prim p =
   | Div -> "/"
   | Mod -> "%"
   | Pow -> "**" ;;
+
+let prim_of_string b p =
+  match p with
+  | "+" -> Add
+  | "-" when b -> Sub
+  | "-" -> Neg
+  | "*" -> Mult
+  | "/" -> Div
+  | "%" -> Mod
+  | "**" -> Pow;;

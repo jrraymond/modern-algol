@@ -52,15 +52,17 @@ let parse_typ tkns = shunt_typ tkns |> build_typ;;
  * violates that. 
  *  e ::= e e | (e) | <int> | fix x:t is e | \x:t.e | cmd m
  *
- *  e ::= d+
- *  d ::= (e) | <int> | fix x:t is e | \x:t.e | cmd m
- *      | case e of \(\| p -> e\)+
- *      | p {b0 p}+ | p {b1 p}+
- *  b0 ::= + | -
- *  b1 ::= * | / | %
- *  b2 ::= **
- *  u0 ::= -
- *  p ::= u0 p | e
+ * We describe the grammar using EBNF. {} means 0 or more times.
+ *
+ *  e ::= e0 {e0}
+ *  e0 ::= e1 | fix x:t is e | \x:t.e | cmd m
+ *      | case e of \| p -> e { | p -> e}
+ *  e1 ::= e2 {+|- e1}
+ *  e2 ::= e3 {*/% e2}
+ *  e3 ::= e4 | -e3
+ *  e4 ::= e5 {** e4}
+ *  e5 ::= (e) | <int> | <var>
+ *
  *
  * The syntax for commands is
  *  m ::= ret e | bnd x <- e ; m | dcl a := e in m | @ a | a := e
@@ -97,61 +99,108 @@ let rec parse_cmd tkns =
       Set (a, e), tkns1
   | _ -> raise (ParseFailure "failed to parse cmd")
 and parse_expe tkns =
-  match parse_expd tkns with
-  | e, [] -> e, []
-  | e, (t::_ as tkns0) when t = ")" || t = "in" || t = ";" || t = "|" -> e, tkns0
-  | e0, tkns0 ->
-      let e1, tkns1 = parse_expe tkns0 in
-      App (e0, e1), tkns1
-and parse_expd tkns =
-  match tkns with
-  | [] -> raise (ParseFailure "Unexpected end of input")
-  | "("::tkns1 ->
-      let e, tkns2 = parse_expe tkns1 in
-      (match tkns2 with
-      | ")"::tkns3 -> e, tkns3
-      | _ -> raise (ParseFailure "expected ')'"))
-  | "cmd"::tkns' ->
-      let m, tkns'' = parse_cmd tkns' in
-      Cmd m, tkns''
-  | "\\"::x::":"::tkns' ->
-      let tkns1, tkns2 = split_while ((<>) ".") tkns' in
-      (match tkns2 with
-      | "."::tkns3 ->
-        let typ = parse_typ tkns1 in
-        let e, tkns4 = parse_expe tkns3 in
-        Abs (x, typ, e), tkns4
-      | _ -> raise (ParseFailure "expected '.'"))
-  | "fix"::x::":"::tkns' ->
-      let tkns1, tkns2 = split_while ((<>) "is") tkns' in
-      (match tkns2 with
-      | "is"::tkns3 ->
-        let typ = parse_typ tkns1 in
-        let e, tkns4 = parse_expe tkns3 in
-        Fix (x, typ, e), tkns4
-      | _ -> raise (ParseFailure "expected 'is'"))
-  | "case"::tkns' ->
-      let tkns1, "of"::tkns2 = split_while ((<>) "of") tkns' in
-      let e, tkns1' = parse_expe tkns1 in
-      let cs = parse_cases tkns2 in
-      (match tkns1', cs with
-      | _, [] -> raise (ParseFailure "case cannot be empty")
-      | [], _ -> Case (e, cs), []
-      | _ -> raise (ParseFailure "expected 'of'"))
-  | t::tkns' ->
-      (try
-        let i = int_of_string t in
-        Int i, tkns'
-      with Failure _ ->
-        Var t, tkns')
-and parse_cases tkns =
-  match tkns with
-  | [] -> []
-  | "|"::p::"->"::tkns' ->
-      let ptn = parse_pattern p in
-      let e, tkns'' = parse_expe tkns' in
-      (ptn, e)::parse_cases tkns''
-  | _ -> raise (ParseFailure ("expected '|', found" ^ (List.hd tkns)));;
+  (*  e ::= e0 {e0} *)
+  let rec parse_e tkns =
+    let rec pe acc tkns =
+      match parse_e0 tkns with
+      | e0, tkns' when tkns' = [] || List.mem (List.hd tkns') ["of"; "|"; ";"; "in"] ->
+          let e = List.fold_left (fun a b -> App (b, a)) e0 acc in
+          e, tkns'
+      | e0, tkns' -> pe (e0::acc) tkns'
+    in pe [] tkns
+  (*  e0 ::= <int> | fix x:t is e | \x:t.e | cmd m
+   *      | case e of \| p -> e { | p -> e} | e1 *)
+  and parse_e0 tkns =
+    match tkns with
+    | "cmd"::tkns' ->
+        let m, tkns'' = parse_cmd tkns' in
+        Cmd m, tkns''
+    | "\\"::x::":"::tkns' ->
+        let tkns1, tkns2 = split_while ((<>) ".") tkns' in
+        (match tkns2 with
+        | "."::tkns3 ->
+          let typ = parse_typ tkns1 in
+          let e, tkns4 = parse_e tkns3 in
+          Abs (x, typ, e), tkns4
+        | _ -> raise (ParseFailure "expected '.'"))
+    | "fix"::x::":"::tkns' ->
+        let tkns1, tkns2 = split_while ((<>) "is") tkns' in
+        (match tkns2 with
+        | "is"::tkns3 ->
+          let typ = parse_typ tkns1 in
+          let e, tkns4 = parse_e tkns3 in
+          Fix (x, typ, e), tkns4
+        | _ -> raise (ParseFailure "expected 'is'"))
+    | "case"::tkns' ->
+        let tkns1, "of"::tkns2 = split_while ((<>) "of") tkns' in
+        let e, tkns1' = parse_e tkns1 in
+        let cs = parse_cases tkns2 in
+        (match tkns1', cs with
+        | _, [] -> raise (ParseFailure "case cannot be empty")
+        | [], _ -> Case (e, cs), []
+        | _ -> raise (ParseFailure "expected 'of'"))
+    | _ -> parse_e1 tkns
+  (*  e1 ::= e2 {+|- e1} *)
+  and parse_e1 tkns =
+    let rec pe1 acc tkns =
+      match parse_e2 tkns with
+      | e, t::tkns' when t = "+" -> pe1 ((e, Add)::acc) tkns'
+      | e, t::tkns' when t = "-" -> pe1 ((e, Sub)::acc) tkns'
+      | e, tkns' ->
+          let e' = List.fold_left (fun a (b, p) -> Op (p, [b; a])) e acc in
+          e', tkns'
+    in pe1 [] tkns
+  (*  e2 ::= e3 {*/% e2} *)
+  and parse_e2 tkns =
+    let rec pe2 acc tkns =
+      match parse_e3 tkns with
+      | e, t::tkns' when t = "*" -> pe2 ((e, Mult)::acc) tkns'
+      | e, t::tkns' when t = "/" -> pe2 ((e, Div)::acc) tkns'
+      | e, t::tkns' when t = "%" -> pe2 ((e, Mod)::acc) tkns'
+      | e, tkns' ->
+          let e' = List.fold_left (fun a (b, p) -> Op (p, [b; a])) e acc in
+          e', tkns'
+    in pe2 [] tkns
+  (*  e3 ::= e4 | -e3 *)
+  and parse_e3 tkns =
+    match tkns with
+    | "-"::tkns' ->
+        let e', tkns'' = parse_e3 tkns' in
+        Op (Neg, [e']), tkns''
+    | _ -> parse_e4 tkns
+  (*  e4 ::= e5 {** e4} *)
+  and parse_e4 tkns =
+    let rec pe4 acc tkns =
+      match parse_e5 tkns with
+      | e, t::tkns' when t = "**" -> pe4 ((e, Pow)::acc) tkns'
+      | e, tkns' ->
+          let e' = List.fold_left (fun a (b, p) -> Op (p, [b; a])) e acc in
+          e', tkns'
+    in pe4 [] tkns
+  (*  e5 ::= (e) | <int> | <var> *)
+  and parse_e5 tkns =
+    match tkns with
+    | [] -> raise  (ParseFailure "unexpected end of input")
+    | "("::tkns' ->
+        (match parse_e tkns' with
+        | e, ")"::tkns'' -> e, tkns''
+        | _, [] -> raise (ParseFailure "expected ')'")
+        | _, t::tkns'' -> raise (ParseFailure ("expected ')', found " ^ t)))
+    | t::tkns' ->
+        (try
+          let i = int_of_string t in
+          Int i, tkns'
+        with Failure _ ->
+          Var t, tkns')
+  and parse_cases tkns =
+    match tkns with
+    | [] -> []
+    | "|"::p::"->"::tkns' ->
+        let ptn = parse_pattern p in
+        let e, tkns'' = parse_e tkns' in
+        (ptn, e)::parse_cases tkns''
+    | _ -> raise (ParseFailure ("expected '|', found" ^ (List.hd tkns)))
+  in parse_e tkns;;
 
 
 
