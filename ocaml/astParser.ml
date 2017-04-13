@@ -150,25 +150,29 @@ and parse_expe tkns =
     | _ -> parse_e1 tkns
   (*  e1 ::= e2 {+|- e1} *)
   and parse_e1 tkns =
-    let rec pe1 acc tkns =
+    let rec pe1 args ops tkns =
       match parse_e2 tkns with
-      | e, t::tkns' when t = "+" -> pe1 ((e, Add)::acc) tkns'
-      | e, t::tkns' when t = "-" -> pe1 ((e, Sub)::acc) tkns'
+      | e, t::tkns' when t = "+" -> pe1 (e::args) (Add::ops) tkns'
+      | e, t::tkns' when t = "-" -> pe1 (e::args) (Sub::ops) tkns'
       | e, tkns' ->
-          let e' = List.fold_left (fun a (b, p) -> Op (p, [b; a])) e acc in
+          let e0::es = List.rev (e::args) in
+          let os = List.rev ops in
+          let e' = List.fold_left2 (fun a b p -> Op (p, [a; b])) e0 es os in
           e', tkns'
-    in pe1 [] tkns
+    in pe1 [] [] tkns
   (*  e2 ::= e3 {*/% e2} *)
   and parse_e2 tkns =
-    let rec pe2 acc tkns =
+    let rec pe2 args ops tkns =
       match parse_e3 tkns with
-      | e, t::tkns' when t = "*" -> pe2 ((e, Mult)::acc) tkns'
-      | e, t::tkns' when t = "/" -> pe2 ((e, Div)::acc) tkns'
-      | e, t::tkns' when t = "%" -> pe2 ((e, Mod)::acc) tkns'
+      | e, t::tkns' when t = "*" -> pe2 (e::args) (Mult::ops) tkns'
+      | e, t::tkns' when t = "/" -> pe2 (e::args) (Div::ops) tkns'
+      | e, t::tkns' when t = "%" -> pe2 (e::args) (Mod::ops) tkns'
       | e, tkns' ->
-          let e' = List.fold_left (fun a (b, p) -> Op (p, [b; a])) e acc in
+          let e0::es = List.rev (e::args) in
+          let os = List.rev ops in
+          let e' = List.fold_left2 (fun a b p -> Op (p, [a; b])) e0 es os in
           e', tkns'
-    in pe2 [] tkns
+    in pe2 [] [] tkns
   (*  e3 ::= e4 | -e3 *)
   and parse_e3 tkns =
     match tkns with
@@ -180,9 +184,10 @@ and parse_expe tkns =
   and parse_e4 tkns =
     let rec pe4 acc tkns =
       match parse_e5 tkns with
-      | e, t::tkns' when t = "**" -> pe4 ((e, Pow)::acc) tkns'
+      | e, t::tkns' when t = "**" -> pe4 (e::acc) tkns'
       | e, tkns' ->
-          let e' = List.fold_left (fun a (b, p) -> Op (p, [b; a])) e acc in
+          let e0::es = List.rev (e::acc) in
+          let e' = List.fold_left (fun a b -> Op (Pow, [a; b])) e0 es in
           e', tkns'
     in pe4 [] tkns
   (*  e5 ::= (e) | <int> | <var> *)

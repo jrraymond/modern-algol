@@ -54,6 +54,8 @@ let cmd_tests = List.map (fun (arg, ans) ->
   ; ("ret 3-4/2", Ret (Op (Sub, [Int 3; Op (Div, [Int 4; Int 2])])))
   ; ("ret 3*2+-4", Ret (Op (Add, [Op (Mult, [Int 3; Int 2]); Op (Neg, [Int 4])])))
   ; ("ret 3+2-1", Ret (Op (Sub, [Op (Add, [Int 3; Int 2]); Int 1])))
+  ; ("ret 3*2/1", Ret (Op (Div, [Op (Mult, [Int 3; Int 2]); Int 1])))
+  ; ("ret 3**2**1", Ret (Op (Pow, [Op (Pow, [Int 3; Int 2]); Int 1])))
   ];;
 
 
