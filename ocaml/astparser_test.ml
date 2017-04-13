@@ -44,7 +44,7 @@ let cmd_tests = List.map (fun (arg, ans) ->
   ; ("ret case x of | 0 -> 0 | x -> x", Ret (Case (Var "x", [(Lit 0, Int 0); (Binder "x", Var "x")])))
   ; ("ret (w x y z)", Ret (App (App (App (Var "w", Var "x"), Var "y"), Var "z")))
   ; ("ret 0*0", Ret (Op (Mult, [Int 0; Int 0])))
-  ; ("ret 1/0", Ret (Op (Div, [Int 0; Int 0])))
+  ; ("ret 1/0", Ret (Op (Div, [Int 1; Int 0])))
   ; ("ret -0", Ret (Op (Neg, [Int 0])))
   ; ("ret 10-1", Ret (Op (Sub, [Int 10; Int 1])))
   ; ("ret 10+1", Ret (Op (Add, [Int 10; Int 1])))
@@ -52,7 +52,8 @@ let cmd_tests = List.map (fun (arg, ans) ->
   ; ("ret 10**1", Ret (Op (Pow, [Int 10; Int 1])))
   ; ("ret 10**1*3", Ret (Op (Mult, [Op (Pow, [Int 10; Int 1]); Int 3])))
   ; ("ret 3-4/2", Ret (Op (Sub, [Int 3; Op (Div, [Int 4; Int 2])])))
-  ; ("ret 3*2+-4", Ret (Op (Add, [Op (Mult, [Int 3; Int 2]); Int (-4)])))
+  ; ("ret 3*2+-4", Ret (Op (Add, [Op (Mult, [Int 3; Int 2]); Op (Neg, [Int 4])])))
+  ; ("ret 3+2-1", Ret (Op (Sub, [Op (Add, [Int 3; Int 2]); Int 1])))
   ];;
 
 

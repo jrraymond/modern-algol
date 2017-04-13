@@ -71,6 +71,14 @@ let parse_pattern tkn =
   try Lit (int_of_string tkn)
   with Failure _ -> Binder tkn;;
 
+(* given c, b, a and binary operator op, constructs expression
+ * op (op (a, b), c)
+ *)
+let right_assoc op exps =
+  match List.rev exps with
+  | [] -> raise (Failure "expected expression")
+  | e::es -> List.fold_left op e es;;
+
 let rec parse_cmd tkns =
   match tkns with
   | "ret"::tkns' -> 
@@ -103,8 +111,8 @@ and parse_expe tkns =
   let rec parse_e tkns =
     let rec pe acc tkns =
       match parse_e0 tkns with
-      | e0, tkns' when tkns' = [] || List.mem (List.hd tkns') ["of"; "|"; ";"; "in"] ->
-          let e = List.fold_left (fun a b -> App (b, a)) e0 acc in
+      | e0, tkns' when tkns' = [] || List.mem (List.hd tkns') [")"; "of"; "|"; ";"; "in"] ->
+          let e = right_assoc (fun a b -> App (a, b)) (e0::acc) in
           e, tkns'
       | e0, tkns' -> pe (e0::acc) tkns'
     in pe [] tkns
@@ -184,8 +192,7 @@ and parse_expe tkns =
     | "("::tkns' ->
         (match parse_e tkns' with
         | e, ")"::tkns'' -> e, tkns''
-        | _, [] -> raise (ParseFailure "expected ')'")
-        | _, t::tkns'' -> raise (ParseFailure ("expected ')', found " ^ t)))
+        | _, tkns'' -> raise (ParseFailure ("expected ')'" ^ List.hd tkns'')))
     | t::tkns' ->
         (try
           let i = int_of_string t in
