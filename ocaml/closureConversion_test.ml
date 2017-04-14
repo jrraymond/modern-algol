@@ -23,14 +23,14 @@ let transform_tests = List.map (fun (exp0, ans) ->
   vs >:: (fun _ -> assert_equal ~cmp:cmp_transform ~msg:m ans res))
   [ (T.Abs ("x", IntTyp,
       T.Abs ("y", IntTyp,
-        T.Op (Add,
-          [ T.Var ({ label = "x"; index = 1 }, IntTyp)
-          ; T.Var ({ label = "y"; index = 0 }, IntTyp) ],
-          IntTyp)
-       , FunTyp (IntTyp, IntTyp))
-      , FunTyp (IntTyp, FunTyp (IntTyp, IntTyp)))
-    , (F.Fun 0
-      , [ { F.var = "x"
+        T.BinOp (
+          Add,
+          T.Var ({ label = "x"; index = 1 }, IntTyp),
+          T.Var ({ label = "y"; index = 0 }, IntTyp),
+          IntTyp),
+        FunTyp (IntTyp, IntTyp)),
+      FunTyp (IntTyp, FunTyp (IntTyp, IntTyp)))
+    , (F.Fun 0, [ { F.var = "x"
           ; F.argt = IntTyp
           ; F.env = []
           ; F.body = F.Fun 1
@@ -40,10 +40,11 @@ let transform_tests = List.map (fun (exp0, ans) ->
           ; F.argt = IntTyp
           ; F.env = [("x", IntTyp)]
           ; F.body = 
-            F.Op (Add,
-              [ F.Var ({ label = "x"; index = 1 }, IntTyp)
-              ; F.Var ({ label = "y"; index = 0 }, IntTyp) ],
-              IntTyp)
+            F.BinOp
+              ( Add
+              , F.Var ({ label = "x"; index = 1 }, IntTyp)
+              , F.Var ({ label = "y"; index = 0 }, IntTyp)
+              , IntTyp)
           ; typ = FunTyp (IntTyp, IntTyp)
           }
         ]

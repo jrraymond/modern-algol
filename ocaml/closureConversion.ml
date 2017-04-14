@@ -26,11 +26,12 @@ let transform env e =
         let fvs = T.free_vars_exp 0 e0 in
         let d = { F.var; F.argt; F.env = fvs; F.body; F.typ } in
         F.Fun i, d::defs'
-    | T.Op (p, es, t) ->
-        let (env, defs'), es' = Utils.accum_left (fun (env, defs) ei ->
-          let ei', defs' = go env defs ei in
-          ((env, defs'), ei')) (env, defs) es
-        in
-        F.Op (p, es', t), defs'
+    | T.UnOp (p, e0, t) ->
+        let e0', defs0 = go env defs e0 in
+        F.UnOp (p, e0', t), defs0
+    | T.BinOp (p, e0, e1, t) ->
+        let e0', defs0 = go env defs e0 in
+        let e1', defs1 = go env defs e1 in
+        F.BinOp (p, e0', e1', t), defs0 @ defs1
     | _ -> raise (Failure "unimplimented")
   in go env [] e;;
