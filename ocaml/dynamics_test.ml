@@ -38,6 +38,13 @@ let exp_step_tests = List.map (fun (arg, ans) ->
     (Case (Int 0, [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })])))
   ; (Case (Int 0, [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })]), Int 1)
   ; (Case (Int 2, [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })]), Int 2)
+  ; (UnOp (Neg, Int 1), Int (-1))
+  ; (BinOp (Add, Int 1, Int 2), Int 3)
+  ; (BinOp (Sub, Int 44, Int 2), Int 42)
+  ; (BinOp (Mult, Int 44, Int 2), Int 88)
+  ; (BinOp (Div, Int 44, Int 2), Int 22)
+  ; (BinOp (Mod, Int 44, Int 2), Int 0)
+  ; (BinOp (Pow, Int 44, Int 2), Int 1936)
   ];;
 
 

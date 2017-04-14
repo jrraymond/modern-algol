@@ -1,6 +1,8 @@
 type typ = IntTyp | FunTyp of typ * typ | CmdTyp;;
 
-type prim = Add | Sub | Mult | Div | Mod | Pow | Neg;;
+type binop = Add | Sub | Mult | Div | Mod | Pow;;
+
+type unop = Neg;;
 
 type var = { label : string; index : int };;
 
@@ -28,22 +30,30 @@ let rec base_typ_of_string s =
   | _ -> raise (Failure "base_typ_of_string");;
 
 
-let string_of_prim p =
+let string_of_binop p =
   match p with
   | Add -> "+"
   | Sub -> "-"
-  | Neg -> "-"
   | Mult -> "*"
   | Div -> "/"
   | Mod -> "%"
   | Pow -> "**" ;;
 
-let prim_of_string b p =
+let string_of_unop p =
+  match p with
+  | Neg -> "-";;
+
+let binop_of_string p =
   match p with
   | "+" -> Add
-  | "-" when b -> Sub
-  | "-" -> Neg
+  | "-" -> Sub
   | "*" -> Mult
   | "/" -> Div
   | "%" -> Mod
   | "**" -> Pow;;
+
+
+let unop_of_string p =
+  match p with
+  | "-" -> Neg;;
+

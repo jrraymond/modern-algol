@@ -97,6 +97,29 @@ let rec type_exp ctx asg e =
           (match type_cases t0 ctx asg cs with
           | Ok (t, tcs) -> Ok (TypedAst.Case (te0, tcs, t))
           | Error e -> Error e))
+  | Ast.UnOp (Neg, e0) ->
+      (match type_exp ctx asg e0 with
+      | Error e -> Error e
+      | Ok te0 ->
+          let t0 = TypedAst.typ_of_exp te0 in
+          if t0 <> IntTyp 
+          then Error (typ_mismatch e0 t0 IntTyp)
+          else Ok (TypedAst.UnOp (Neg, te0, IntTyp)))
+  | Ast.BinOp (op, e0, e1) ->
+      (match type_exp ctx asg e0 with
+      | Error e -> Error e
+      | Ok te0 ->
+          let t0 = TypedAst.typ_of_exp te0 in
+          if t0 <> IntTyp 
+          then Error (typ_mismatch e0 t0 IntTyp)
+          else
+            (match type_exp ctx asg e1 with
+            | Error e -> Error e
+            | Ok te1 ->
+                let t1 = TypedAst.typ_of_exp te1 in
+                if t1 <> IntTyp 
+                then Error (typ_mismatch e1 t1 IntTyp)
+                else Ok (TypedAst.BinOp (op, te0, te1, IntTyp))))
 and type_cases t ctx asg =
   let rec tcc_h mt ts cs =
     match cs with

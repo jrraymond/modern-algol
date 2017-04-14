@@ -157,7 +157,7 @@ and parse_expe tkns =
       | e, tkns' ->
           let e0::es = List.rev (e::args) in
           let os = List.rev ops in
-          let e' = List.fold_left2 (fun a b p -> Op (p, [a; b])) e0 es os in
+          let e' = List.fold_left2 (fun a b p -> BinOp (p, a, b)) e0 es os in
           e', tkns'
     in pe1 [] [] tkns
   (*  e2 ::= e3 {*/% e2} *)
@@ -170,7 +170,7 @@ and parse_expe tkns =
       | e, tkns' ->
           let e0::es = List.rev (e::args) in
           let os = List.rev ops in
-          let e' = List.fold_left2 (fun a b p -> Op (p, [a; b])) e0 es os in
+          let e' = List.fold_left2 (fun a b p -> BinOp (p, a, b)) e0 es os in
           e', tkns'
     in pe2 [] [] tkns
   (*  e3 ::= e4 | -e3 *)
@@ -178,7 +178,7 @@ and parse_expe tkns =
     match tkns with
     | "-"::tkns' ->
         let e', tkns'' = parse_e3 tkns' in
-        Op (Neg, [e']), tkns''
+        UnOp (Neg, e'), tkns''
     | _ -> parse_e4 tkns
   (*  e4 ::= e5 {** e4} *)
   and parse_e4 tkns =
@@ -187,7 +187,7 @@ and parse_expe tkns =
       | e, t::tkns' when t = "**" -> pe4 (e::acc) tkns'
       | e, tkns' ->
           let e0::es = List.rev (e::acc) in
-          let e' = List.fold_left (fun a b -> Op (Pow, [a; b])) e0 es in
+          let e' = List.fold_left (fun a b -> BinOp (Pow, a, b)) e0 es in
           e', tkns'
     in pe4 [] tkns
   (*  e5 ::= (e) | <int> | <var> *)

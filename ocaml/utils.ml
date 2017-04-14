@@ -64,3 +64,14 @@ let accum_left f0 z0 xs0 =
         let z', y = f z x in
         go (y::ys) f z' xs'
   in go [] f0 z0 xs0;;
+
+
+(* exponentiation by squaring *)
+let rec pow b e =
+  match e with
+  | 0 -> 1
+  | 1 -> b
+  | _ ->
+      let x = pow b (e / 2) in
+      let y = if e mod 2 = 0 then 1 else b in
+      x * x * y;;

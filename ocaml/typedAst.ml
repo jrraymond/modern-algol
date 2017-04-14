@@ -8,7 +8,8 @@ type exp =
   | App of exp * exp * typ
   | Cmd of cmd * typ
   | Case of exp * (pattern * exp) list * typ
-  | Op of prim * exp list * typ
+  | UnOp of unop * exp * typ
+  | BinOp of binop * exp * exp * typ
 and cmd =
   | Ret of exp * typ
   | Bnd of string * exp * cmd * typ
@@ -38,8 +39,8 @@ let rec free_vars_exp i e =
         vs @ match p with
         | Lit _ -> free_vars_exp i e0
         | Binder x -> free_vars_exp (i + 1) e0) [] cs
-  | Op (_, es, _) ->
-      List.fold_left (fun vs e0 -> vs @ free_vars_exp i e0) [] es
+  | UnOp (_, e0, _) -> free_vars_exp i e0
+  | BinOp (_, e0, e1, _) -> free_vars_exp i e0 @ free_vars_exp i e1
 and free_vars_cmd i m =
   match m with
   | Ret (e, _) -> free_vars_exp i e
@@ -55,7 +56,8 @@ let typ_of_exp (e : exp) : typ =
   | App (_, _, t) -> t
   | Case (_, _, t) -> t
   | Cmd (_, t) -> t
-  | Op (_, _, t) -> t;;
+  | UnOp (_, _, t) -> t
+  | BinOp (_, _, _, t) -> t;;
 
 
 let typ_of_cmd m =
@@ -105,11 +107,17 @@ let rec string_of_exp e =
       let es = string_of_exp e in
       let ts = string_of_typ t in
       Printf.sprintf "(case %s of %s) : %s" es (Utils.intercalate "" cs) ts
-  | Op (p, args, t) ->
-      let ps = string_of_prim p in
-      let s = List.map string_of_exp args |> Utils.intercalate " " in
+  | UnOp (p, e, t) ->
+      let ps = string_of_unop p in
+      let es = string_of_exp e in
       let ts = string_of_typ t in
-      Printf.sprintf "%s %s : %s" ps s ts
+      Printf.sprintf "(%s %s) : %s" ps es ts
+  | BinOp (p, e0, e1, t) ->
+      let ps = string_of_binop p in
+      let e0s = string_of_exp e0 in
+      let e1s = string_of_exp e1 in
+      let ts = string_of_typ t in
+      Printf.sprintf "(%s %s %s) : %s" e0s ps e1s ts
 and string_of_cmd c =
   match c with
   | Ret (e, t) ->

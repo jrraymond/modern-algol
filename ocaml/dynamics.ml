@@ -89,6 +89,20 @@ let step_exp ctx =
     | Fix (x, _, e0) -> subst_exp e 0 e0
     | Case (Int i, cs) -> match_patterns i cs
     | Case (e0, cs) -> Case (step e0, cs)
+    | UnOp (Neg, e0) when is_exp_val e0 -> 
+        (match e0 with
+        | Int i -> Int (-i)
+        | _ -> raise Stuck)
+    | UnOp (Neg, e0) -> UnOp (Neg, step e0)
+    | BinOp (op, e0, e1) when is_exp_val e0 && is_exp_val e1 ->
+        (match op, e0, e1 with
+        | Add, Int x, Int y -> Int (x + y)
+        | Sub, Int x, Int y -> Int (x - y)
+        | Mult, Int x, Int y -> Int (x * y)
+        | Div, Int x, Int y -> Int (x / y)
+        | Mod, Int x, Int y -> Int (x mod y)
+        | Pow, Int x, Int y -> Int (Utils.pow x y)
+        | _ -> raise Stuck)
     | _ -> raise Stuck
   in step;;
 

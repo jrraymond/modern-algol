@@ -32,6 +32,13 @@ let well_typed_exp_tests = List.map (fun (ctx, exp, ans) ->
   ; (ctx_of_list [], Fix ("x", IntTyp, App (id_fun, Var { label = "x"; index = 0 })), Ok IntTyp)
   ; (ctx_of_list [], Cmd (Ret (Int 0)), Ok CmdTyp)
   ; (ctx_of_list [], Case (Int 0, [(Lit 0, Int 1); (Binder "x", Var { label = "x"; index = 0 })]), Ok IntTyp)
+  ; (ctx_of_list [], UnOp (Neg, Int 0), Ok IntTyp)
+  ; (ctx_of_list [], BinOp (Add, Int 1, Int 0), Ok IntTyp)
+  ; (ctx_of_list [], BinOp (Sub, Int 1, Int 0), Ok IntTyp)
+  ; (ctx_of_list [], BinOp (Mult, Int 1, Int 0), Ok IntTyp)
+  ; (ctx_of_list [], BinOp (Div, Int 1, Int 0), Ok IntTyp)
+  ; (ctx_of_list [], BinOp (Mod, Int 1, Int 0), Ok IntTyp)
+  ; (ctx_of_list [], BinOp (Pow, Int 1, Int 0), Ok IntTyp)
   ];;
 
 

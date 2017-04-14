@@ -10,7 +10,8 @@ type exp =
   | Cmd of cmd * typ
   | Case of exp * (pattern * exp) list * typ
   | Fun of int
-  | Op of prim * exp list * typ
+  | UnOp of prim * exp
+  | BinOp of prim * exp * exp
 and cmd =
   | Ret of exp * typ
   | Bnd of string * exp * cmd * typ
@@ -62,11 +63,17 @@ let rec string_of_exp e =
       let es = string_of_exp e in
       let ts = string_of_typ t in
       Printf.sprintf "(case %s of %s) : %s" es (Utils.intercalate "" cs) ts
-  | Op (p, args, t) ->
+  | UnOp (p, e, t) ->
       let ps = string_of_prim p in
-      let s = List.map string_of_exp args |> Utils.intercalate " " in
+      let es = string_of_exp e in
       let ts = string_of_typ t in
-      Printf.sprintf "%s %s : %s" ps s ts
+      Printf.sprintf "(%s %s) : %s" ps es ts
+  | BinOp (p, e0, e1, t) ->
+      let ps = string_of_prim p in
+      let e0s = string_of_exp e0 in
+      let e1s = string_of_exp e1 in
+      let ts = string_of_typ t in
+      Printf.sprintf "(%s %s %s) : %s" e0s ps e1s ts
 and string_of_cmd c =
   match c with
   | Ret (e, t) ->
