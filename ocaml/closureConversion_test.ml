@@ -30,10 +30,10 @@ let transform_tests = List.map (fun (exp0, ans) ->
           IntTyp),
         FunTyp (IntTyp, IntTyp)),
       FunTyp (IntTyp, FunTyp (IntTyp, IntTyp)))
-    , (F.Fun 0, [ { F.var = "x"
+    , (F.Fun "0", [ { F.var = "x"
           ; F.argt = IntTyp
           ; F.env = []
-          ; F.body = F.Fun 1
+          ; F.body = F.Fun "1"
           ; F.typ = FunTyp (IntTyp, FunTyp (IntTyp, IntTyp))
           }
         ; { F.var = "y"

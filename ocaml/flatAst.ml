@@ -9,7 +9,7 @@ type exp =
   | App of exp * exp * typ
   | Cmd of cmd * typ
   | Case of exp * (pattern * exp) list * typ
-  | Fun of int
+  | Fun of string
   | UnOp of unop * exp * typ
   | BinOp of binop * exp * exp * typ
 and cmd =
@@ -40,7 +40,7 @@ let rec string_of_exp e =
       let es = string_of_exp e' in
       let ts = string_of_typ t in
       Printf.sprintf "(fix %s : %s is %s) : %s" x txs es ts
-  | Fun i -> "$" ^ string_of_int i
+  | Fun f -> "$" ^ f
   | App (e0, (App _ as e1), t) ->
       let s0 = string_of_exp e0 in
       let s1 = string_of_exp e1 in

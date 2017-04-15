@@ -25,7 +25,7 @@ let transform env e =
         let body, defs' = go ((var, argt)::env) defs e0 in
         let fvs = T.free_vars_exp 0 e0 in
         let d = { F.var; F.argt; F.env = fvs; F.body; F.typ } in
-        F.Fun i, d::defs'
+        F.Fun (string_of_int i), d::defs'
     | T.UnOp (p, e0, t) ->
         let e0', defs0 = go env defs e0 in
         F.UnOp (p, e0', t), defs0

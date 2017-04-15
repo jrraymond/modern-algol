@@ -37,7 +37,7 @@ let string_of_binop p =
   | Mult -> "*"
   | Div -> "/"
   | Mod -> "%"
-  | Pow -> "**" ;;
+  | Pow -> "**";;
 
 let string_of_unop p =
   match p with
@@ -50,10 +50,12 @@ let binop_of_string p =
   | "*" -> Mult
   | "/" -> Div
   | "%" -> Mod
-  | "**" -> Pow;;
+  | "**" -> Pow
+  | _ -> raise (Failure ("Unknown operator :" ^ p));;
 
 
 let unop_of_string p =
   match p with
-  | "-" -> Neg;;
+  | "-" -> Neg
+  | _ -> raise (Failure ("Unknown operator :" ^ p));;
 
